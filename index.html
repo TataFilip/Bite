@@ -433,7 +433,7 @@ function normalize(d) {
   d.settings = Object.assign({}, DEFAULT_SETTINGS, st, { profile: Object.assign({}, DEFAULT_SETTINGS.profile, st.profile || {}) });
   d.days = d.days || {}; d.recents = d.recents || []; d.custom = d.custom || []; d.weights = d.weights || {};
   d.fast = d.fast || { start: null, log: [] };
-  for (const k in d.days) { const x = d.days[k]; x.items = x.items || []; x.water = x.water || 0; x.ex = x.ex || []; }
+  for (const k in d.days) { const x = d.days[k]; if (!x || typeof x !== 'object') { delete d.days[k]; continue; } x.items = Array.isArray(x.items) ? x.items.filter(i => i && typeof i === 'object') : []; x.water = x.water || 0; x.ex = Array.isArray(x.ex) ? x.ex : []; }
   return d;
 }
 function day(k) { return S.days[k] || (S.days[k] = { items: [], water: 0, ex: [] }); }
@@ -1704,6 +1704,7 @@ function maybeOnboard() {
     </div>
     <button class="btn grad block" id="oNext">Dalje</button>
     <button class="btn ghost block" id="oSkip0" style="margin-top:8px">Preskoči</button>`);
+  S.settings.onboarded = true; save(); // closing via the backdrop must not bring the welcome back on every launch
   $('#oNext').onclick = onboardForm;
   $('#oSkip0').onclick = () => { S.settings.onboarded = true; save(); closeSheet(); };
 }
@@ -1868,7 +1869,14 @@ $('#resetBtn').onclick = async () => {
   if (cloud) Object.keys(synced).forEach(id => { delete synced[id]; chain = chain.then(() => cloud.doc(id).delete()).catch(() => {}); });
   S = normalize(null); applyTheme(); rerender(); toast('Sve obrisano');
 };
-document.addEventListener('visibilitychange', () => { if (!document.hidden) rerender(); });
+let lastDay = today();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  // app left open past midnight: move "today" forward so new entries don't land on yesterday
+  const t = today();
+  if (t !== lastDay) { if (cur === lastDay) cur = t; if (weekEnd === lastDay) weekEnd = t; lastDay = t; }
+  rerender();
+});
 
 if (IN_CLAUDE) { $('#themeCard').hidden = true; $('#usdaCard').hidden = true; }
 else {
