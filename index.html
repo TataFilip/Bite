@@ -1,0 +1,1891 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14121f">
+<!--PWA--><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="icons/favicon-32.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Bite"><!--/PWA-->
+<title>Bite</title>
+<meta name="description" content="Kalorije na srpskom. Bez naloga, bez reklama.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one phone-width column; summary first, then quick actions, meals, then trackers. Dark glass by default, soft pastel light theme. */
+:root{
+  --bg:#f6f2ee; --card:rgba(255,255,255,.66); --card-solid:#fffdfb; --line:rgba(40,30,60,.09);
+  --text:#231d33; --muted:#7a7290; --faint:#b3abc4;
+  --accent:#7d6cf2; --kcal-a:#a594ff; --kcal-b:#ffb3c7; --over:#f06a6a; --good:#3fbf8f;
+  --p:#3fc495; --c:#5fb1f5; --f:#f5a54a; --water:#5fb1f5; --ex:#f58a5f; --fast:#b58cf5;
+  --blob1:#d9ceff; --blob2:#ffd6e2; --blob3:#cdeee2;
+  --shadow:0 10px 30px rgba(60,40,110,.10); --input:rgba(255,255,255,.85);
+  --t-breakfast:#ffe7b8; --t-lunch:#d4f2de; --t-dinner:#dcd6ff; --t-snack:#ffd9e4; --hero-a:rgba(165,148,255,.22); --hero-b:rgba(255,179,199,.20);
+  --display:"Bricolage Grotesque","Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14121f; --card:rgba(255,255,255,.06); --card-solid:#211d35; --line:rgba(255,255,255,.08);
+    --text:#f2eefc; --muted:#a39cbb; --faint:#6d6688;
+    --accent:#a99bff; --over:#ff7a7a; --good:#5fd3a8;
+    --p:#5fd3a8; --c:#7cc4ff; --f:#ffb86b; --water:#7cc4ff; --ex:#ff9b73; --fast:#c9a6ff;
+    --blob1:#4b3a9a; --blob2:#7a3561; --blob3:#1f5a55;
+    --shadow:0 10px 40px rgba(0,0,0,.35); --input:rgba(255,255,255,.07);
+    --t-breakfast:rgba(255,196,92,.18); --t-lunch:rgba(95,211,168,.16); --t-dinner:rgba(169,155,255,.20); --t-snack:rgba(255,159,184,.18); --hero-a:rgba(165,148,255,.20); --hero-b:rgba(255,159,184,.14);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14121f; --card:rgba(255,255,255,.06); --card-solid:#211d35; --line:rgba(255,255,255,.08);
+  --text:#f2eefc; --muted:#a39cbb; --faint:#6d6688;
+  --accent:#a99bff; --over:#ff7a7a; --good:#5fd3a8;
+  --p:#5fd3a8; --c:#7cc4ff; --f:#ffb86b; --water:#7cc4ff; --ex:#ff9b73; --fast:#c9a6ff;
+  --blob1:#4b3a9a; --blob2:#7a3561; --blob3:#1f5a55;
+  --shadow:0 10px 40px rgba(0,0,0,.35); --input:rgba(255,255,255,.07);
+  --t-breakfast:rgba(255,196,92,.18); --t-lunch:rgba(95,211,168,.16); --t-dinner:rgba(169,155,255,.20); --t-snack:rgba(255,159,184,.18); --hero-a:rgba(165,148,255,.20); --hero-b:rgba(255,159,184,.14);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.4;min-height:100vh;overflow-x:hidden;font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.blobs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blobs i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.75;animation:float 18s ease-in-out infinite alternate}
+.blobs i:nth-child(1){width:340px;height:340px;background:var(--blob1);top:-90px;left:-80px}
+.blobs i:nth-child(2){width:300px;height:300px;background:var(--blob2);top:30%;right:-120px;animation-delay:-6s}
+.blobs i:nth-child(3){width:280px;height:280px;background:var(--blob3);bottom:-80px;left:10%;animation-delay:-12s}
+@keyframes float{to{transform:translate(30px,40px) scale(1.1)}}
+@media (prefers-reduced-motion: reduce){.blobs i{animation:none}*{transition:none!important;animation:none!important}}
+
+.app{position:relative;z-index:1;max-width:560px;margin:0 auto;padding-block:14px calc(110px + env(safe-area-inset-bottom, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+header.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+.brand{font-weight:800;font-size:24px;letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
+.brand .dot{width:13px;height:13px;border-radius:50%;background:linear-gradient(135deg,var(--kcal-a),var(--kcal-b))}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:700;font-size:13px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:var(--text)}
+.top-right{display:flex;gap:6px;align-items:center}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn svg{width:18px;height:18px}
+
+/* date strip */
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
+.sd{border:0;background:transparent;color:var(--muted);border-radius:16px;padding:6px 0 8px;display:grid;justify-items:center;gap:3px;cursor:pointer}
+.sd small{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sd .dr{position:relative;width:34px;height:34px}
+.sd .dr svg{width:100%;height:100%;transform:rotate(-90deg)}
+.sd .dr b{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;color:var(--text)}
+.sd.on{background:var(--card);box-shadow:var(--shadow);color:var(--text)}
+.sd.today small{color:var(--accent)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin-bottom:14px}
+.card-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.card-title h3{margin:0;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-title .meta{color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap}
+.em{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;font-size:16px;background:var(--line);flex:none}
+
+.summary{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ring{position:relative;width:140px;height:140px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .prog{transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
+.ring .center{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring .big{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.ring .lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.ring.over .big{color:var(--over)}
+.eq{display:grid;gap:8px;min-width:0}
+.eq-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);gap:6px}
+.eq-row b{color:var(--text);font-weight:700;font-size:15px}
+.eq-row .sw{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.eq-row.total{border-top:1px solid var(--line);padding-top:8px}
+.macros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.mac{display:flex;align-items:center;gap:8px;min-width:0}
+.mac svg{width:40px;height:40px;transform:rotate(-90deg);flex:none}
+.mac div{min-width:0}
+.mac b{display:block;font-size:14px;font-weight:700;white-space:nowrap}
+.mac small{color:var(--muted);font-size:11px;white-space:nowrap;display:block}
+@media (max-width:400px){.summary{gap:14px}.ring{width:118px;height:118px}.ring .big{font-size:24px}.mac svg{width:32px;height:32px}.mac{gap:6px}}
+
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.qa button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:20px;padding:14px 6px 12px;display:grid;justify-items:center;gap:6px;font-weight:700;font-size:13px;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+.qa button span{font-size:22px;line-height:1}
+.qa button small{font-weight:500;color:var(--muted);font-size:11px}
+.qa button:active{transform:scale(.96)}
+.qa button.ai{background:linear-gradient(135deg,color-mix(in srgb,var(--kcal-a) 30%,var(--card)),color-mix(in srgb,var(--kcal-b) 30%,var(--card)))}
+
+.items{list-style:none;margin:0;padding:0}
+.item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.item:first-child{border-top:0}
+.item .nm{flex:1;min-width:0}
+.item .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .nm small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.item .kc{font-weight:700;font-size:14px;white-space:nowrap}
+.meal-actions{display:flex;gap:8px;margin-top:8px}
+.add-btn{flex:1;border:1.5px dashed var(--line);background:transparent;color:var(--accent);font-weight:700;padding:11px;border-radius:14px;cursor:pointer;font-size:14px}
+.copy-btn{border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:600;padding:11px 12px;border-radius:14px;cursor:pointer;font-size:13px;white-space:nowrap}
+.add-btn:active,.copy-btn:active{transform:scale(.98)}
+.empty-note{color:var(--muted);font-size:13px;padding:2px 0 4px}
+
+.glasses{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.glass{aspect-ratio:3/4;max-width:100%;border:1.5px solid color-mix(in srgb,var(--water) 45%,transparent);border-radius:8px 8px 12px 12px;background:transparent;cursor:pointer;position:relative;overflow:hidden;padding:0}
+.glass i{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--water);opacity:.85;transition:height .35s ease}
+.glass.full i{height:78%}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mini{border:1px solid var(--line);background:var(--input);color:var(--text);border-radius:12px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer}
+.bar{height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:9px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.fast-time{font-size:30px;font-weight:800;letter-spacing:-.02em}
+
+nav.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom, 0px));z-index:20;display:flex;gap:4px;padding:6px;border-radius:24px;background:var(--card);border:1px solid var(--line);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:var(--shadow);width:min(380px,calc(100% - 32px))}
+nav.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:600;padding:8px 4px;border-radius:18px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+nav.tabs button svg{width:20px;height:20px}
+nav.tabs button.on{background:var(--text);color:var(--card-solid)}
+nav.tabs .plus{flex:none;width:56px;background:linear-gradient(135deg,var(--kcal-a),var(--kcal-b));color:#fff;border-radius:18px;justify-content:center}
+nav.tabs .plus svg{width:26px;height:26px}
+nav.tabs .plus:active{transform:scale(.93)}
+
+.view{display:none}
+.view.on{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{transform:translateY(6px)}to{transform:none}}
+h2.sec{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:4px 2px 12px}
+
+.scrim{position:fixed;inset:0;background:rgba(10,8,20,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:560px;margin:0 auto;background:var(--card-solid);border-radius:28px 28px 0 0;padding:10px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;transform:translateY(105%);transition:transform .35s cubic-bezier(.2,.9,.2,1);box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+.sheet.on{transform:none}
+.grab{width:42px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 12px}
+.sheet h3{margin:0 0 4px;font-size:19px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+.sheet .sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--input);color:var(--text);font-size:13px;font-weight:600;padding:7px 12px;border-radius:999px;white-space:nowrap;cursor:pointer}
+.chip.on{background:var(--text);color:var(--card-solid);border-color:transparent}
+.search{display:flex;gap:8px;margin-bottom:10px}
+input,select,textarea{font:inherit;color:var(--text);background:var(--input);border:1px solid var(--line);border-radius:14px;padding:11px 13px;width:100%;outline:none;min-width:0;font-size:16px}
+textarea{resize:vertical;min-height:96px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.btn{border:0;font-weight:700;padding:12px 16px;border-radius:14px;cursor:pointer;background:var(--text);color:var(--card-solid);white-space:nowrap;font-size:15px}
+.btn.grad{background:linear-gradient(135deg,var(--kcal-a),var(--kcal-b));color:#fff}
+.btn.ghost{background:var(--input);color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--over);border:1px solid color-mix(in srgb,var(--over) 40%,transparent)}
+.btn.block{width:100%}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.5}
+.list-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 2px 6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.list-title span{text-transform:none;letter-spacing:0;font-weight:500}
+.res{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:10px}
+.res:active{background:var(--line)}
+.res img,.res .ph{width:40px;height:40px;border-radius:10px;object-fit:cover;background:var(--line);flex:none;display:grid;place-items:center;font-size:18px}
+.res .nm{flex:1;min-width:0}
+.res .nm b{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res .nm small{color:var(--muted);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res .kc{text-align:right;font-weight:700;font-size:13px;white-space:nowrap}
+.res .kc small{display:block;color:var(--muted);font-weight:500;font-size:11px}
+.loading{display:flex;gap:6px;justify-content:center;padding:22px}
+.loading i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:bounce 1s infinite ease-in-out}
+.loading i:nth-child(2){animation-delay:.15s}.loading i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:none;opacity:1}}
+.msg{color:var(--muted);text-align:center;padding:18px 8px;font-size:14px}
+.detail-macros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.dm{background:var(--input);border:1px solid var(--line);border-radius:16px;padding:10px 4px;text-align:center}
+.dm b{display:block;font-size:18px;font-weight:800;letter-spacing:-.02em}
+.dm small{color:var(--muted);font-size:11px;font-weight:600}
+.qty{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;margin-bottom:12px}
+.field{display:grid;gap:5px;margin-bottom:10px}
+.field label{font-size:12px;font-weight:700;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.row-btns{display:flex;gap:8px;margin-top:6px}
+.row-btns .btn{flex:1}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.action-grid button{border:1px solid var(--line);background:var(--input);color:var(--text);border-radius:18px;padding:14px;text-align:left;cursor:pointer;display:grid;gap:4px}
+.action-grid button b{font-size:15px}
+.action-grid button small{color:var(--muted);font-size:12px}
+.action-grid button span{font-size:22px}
+.ai-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ai-item input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.ai-item input[type=number]{width:84px;padding:8px 10px;font-size:15px}
+.ai-item b{display:block;font-size:14px}
+.ai-item small{color:var(--muted);font-size:12px}
+.photo-prev{width:100%;max-height:220px;object-fit:cover;border-radius:18px;margin-bottom:10px;display:block}
+.coach{white-space:pre-wrap;font-size:14px;line-height:1.55}
+
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart text{fill:var(--muted);font-size:11px;font-family:var(--font);font-weight:600}
+.week-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.week-head b{font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.kpi{background:var(--input);border:1px solid var(--line);border-radius:16px;padding:10px 6px;text-align:center}
+.kpi b{display:block;font-size:17px;font-weight:800}
+.kpi small{color:var(--muted);font-size:11px;font-weight:600}
+.big-num{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.hint{font-size:12px;color:var(--muted);margin:2px 2px 10px}
+.hint a{color:var(--accent)}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top, 0px));transform:translate(-50%,-160%);background:var(--text);color:var(--card-solid);padding:10px 12px 10px 16px;border-radius:14px;font-weight:600;font-size:14px;z-index:60;transition:transform .35s cubic-bezier(.2,.9,.2,1);max-width:calc(100% - 32px);display:flex;gap:12px;align-items:center}
+.toast.on{transform:translate(-50%,0)}
+.toast button{border:0;background:var(--card-solid);color:var(--text);font-weight:800;border-radius:10px;padding:6px 10px;cursor:pointer}
+details summary{cursor:pointer;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";float:right;color:var(--muted)}
+details[open] summary::after{content:"−"}
+.brand,.ring .big,.big-num,h2.sec,.sheet h3,.fast-time,.dm b,.kpi b{font-family:var(--display);font-optical-sizing:auto}
+.brand{font-size:27px}
+.hero{background:radial-gradient(120% 90% at 0% 0%,var(--hero-a),transparent 60%),radial-gradient(90% 90% at 100% 100%,var(--hero-b),transparent 60%),var(--card)}
+.ring .prog{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--kcal-a) 55%,transparent))}
+.ring .big{font-size:34px}
+.em.breakfast{background:var(--t-breakfast)}.em.lunch{background:var(--t-lunch)}.em.dinner{background:var(--t-dinner)}.em.snack{background:var(--t-snack)}
+.qa button span{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:var(--input);font-size:21px}
+.qa button.ai span{background:linear-gradient(135deg,var(--kcal-a),var(--kcal-b));box-shadow:0 6px 16px color-mix(in srgb,var(--kcal-a) 40%,transparent)}
+.sec-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 4px 8px}
+.src-tag{display:inline-block;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.03em;padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.src-tag.ai{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:32px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--input);color:var(--text);font-size:18px;font-weight:700;cursor:pointer}
+.ai-item .stepper input{width:58px;padding:8px 4px;text-align:center;font-size:15px}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;margin:14px 2px;font-weight:700}
+.total-row b{font-family:var(--display);font-size:24px}
+@media (max-width:400px){.ring .big{font-size:27px}.ai-item .stepper input{width:50px}.stepper button{width:28px}}
+@media (display-mode: standalone){.app{padding-top:calc(14px + env(safe-area-inset-top, 0px))}}
+.badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="dot"></span>bite</div>
+    <div class="top-right">
+      <span class="pill" id="streak" title="Uzastopni dani sa unosom">🔥 0</span>
+      <button class="icon-btn" id="todayBtn" aria-label="Idi na danas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
+    </div>
+  </header>
+
+  <!-- TODAY -->
+  <section class="view on" id="v-today">
+    <div class="strip" id="strip"></div>
+    <div class="card hero">
+      <div class="summary">
+        <div class="ring" id="ring">
+          <svg viewBox="0 0 120 120">
+            <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--kcal-a)"/><stop offset="1" stop-color="var(--kcal-b)"/></linearGradient></defs>
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--line)" stroke-width="11"/>
+            <circle class="prog" id="ringProg" cx="60" cy="60" r="52" fill="none" stroke="url(#rg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+          </svg>
+          <div class="center"><div class="big" id="remain">0</div><div class="lbl" id="remainLbl">kcal preostalo</div></div>
+        </div>
+        <div class="eq">
+          <div class="eq-row"><span><i class="sw" style="background:var(--accent)"></i>Cilj</span><b id="eGoal">0</b></div>
+          <div class="eq-row"><span><i class="sw" style="background:var(--kcal-b)"></i>Hrana</span><b id="eFood">0</b></div>
+          <div class="eq-row"><span><i class="sw" style="background:var(--ex)"></i>Vežbe</span><b id="eEx">0</b></div>
+          <div class="eq-row total"><span>Preostalo</span><b id="eRem">0</b></div>
+        </div>
+      </div>
+      <div class="macros" id="macros"></div>
+    </div>
+
+    <div class="qa">
+      <button class="ai" id="qaPhoto"><span>📸</span>Slikaj<small>AI prepozna obrok</small></button>
+      <button class="ai" id="qaText"><span>💬</span>Opiši<small>„2 jaja i hleb“</small></button>
+      <button id="qaSearch"><span>🔎</span>Traži<small>baza hrane</small></button>
+    </div>
+
+    <div class="sec-label">Obroci</div>
+    <div id="meals"></div>
+
+    <div class="sec-label">Dnevne navike</div>
+    <div class="card" id="waterCard"></div>
+    <div class="card" id="exCard"></div>
+    <div class="card" id="fastCard"></div>
+    <button class="btn ghost block" id="shareBtn" style="margin-top:12px">📤 Podeli današnji dan</button>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="view" id="v-progress">
+    <h2 class="sec">Napredak</h2>
+    <div class="card" id="weightCard"></div>
+    <div class="card" id="tdeeCard"></div>
+    <div class="card">
+      <div class="week-head">
+        <button class="icon-btn" id="wPrev" aria-label="Prethodna nedelja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <b id="wLabel"></b>
+        <button class="icon-btn" id="wNext" aria-label="Sledeća nedelja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+      <div id="chart"></div>
+      <div class="kpis" id="kpis"></div>
+    </div>
+    <div class="card" id="coachCard"></div>
+    <div class="card"><div class="list-title" style="margin-top:0">Svi dani</div><div id="dayList"></div></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="view" id="v-profile">
+    <h2 class="sec">Profil i cilj</h2>
+    <div class="card">
+      <div class="grid2">
+        <div class="field"><label for="pSex">Pol</label><select id="pSex"><option value="m">Muški</option><option value="f">Ženski</option></select></div>
+        <div class="field"><label for="pAge">Godine</label><input id="pAge" type="number" inputmode="numeric"></div>
+        <div class="field"><label for="pH">Visina (cm)</label><input id="pH" type="number" inputmode="numeric"></div>
+        <div class="field"><label for="pW">Težina (kg)</label><input id="pW" type="number" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label for="pAct">Aktivnost</label><select id="pAct">
+        <option value="1.2">Sedentarno (kancelarija, malo kretanja)</option>
+        <option value="1.375">Lagano (1–3 treninga nedeljno)</option>
+        <option value="1.55">Umereno (3–5 treninga)</option>
+        <option value="1.725">Jako (6–7 treninga)</option>
+        <option value="1.9">Ekstremno (fizički posao + trening)</option></select></div>
+      <div class="field"><label for="pPace">Cilj</label><select id="pPace">
+        <option value="-0.75">Brže mršavljenje (−0,75 kg nedeljno)</option>
+        <option value="-0.5">Mršavljenje (−0,5 kg nedeljno)</option>
+        <option value="-0.25">Blago mršavljenje (−0,25 kg nedeljno)</option>
+        <option value="0">Održavanje težine</option>
+        <option value="0.25">Blago dobijanje mase (+0,25 kg)</option>
+        <option value="0.5">Dobijanje mase (+0,5 kg nedeljno)</option></select></div>
+      <div class="msg" id="calcOut" style="padding:6px"></div>
+      <button class="btn grad block" id="applyCalc">Postavi ovaj cilj</button>
+    </div>
+    <div class="card">
+      <div class="field"><label for="goal">Dnevni cilj (kcal), možeš i ručno</label><input id="goal" type="number" inputmode="numeric"></div>
+      <div class="field"><label>Makronutrijenti (%)</label>
+        <div class="grid3" style="font-size:11px;font-weight:700;color:var(--muted)"><span>Proteini</span><span>Ugljeni h.</span><span>Masti</span></div>
+        <div class="grid3">
+          <input id="pPct" type="number" inputmode="numeric" aria-label="Proteini %">
+          <input id="cPct" type="number" inputmode="numeric" aria-label="Ugljeni hidrati %">
+          <input id="fPct" type="number" inputmode="numeric" aria-label="Masti %">
+        </div>
+        <div class="hint" id="macroHint"></div>
+      </div>
+      <div class="chips" id="presetChips" style="margin-bottom:10px">
+        <button class="chip" data-m="30,40,30">Uravnoteženo</button><button class="chip" data-m="35,35,30">Više proteina</button><button class="chip" data-m="25,50,25">Sportski</button><button class="chip" data-m="30,20,50">Low-carb</button>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="waterGoal">Cilj vode (čaša)</label><input id="waterGoal" type="number" inputmode="numeric"></div>
+        <div class="field"><label for="exToggle">Vežbe uvećavaju budžet</label><select id="exToggle"><option value="1">Da</option><option value="0">Ne</option></select></div>
+      </div>
+      <button class="btn block" id="saveGoals">Sačuvaj</button>
+    </div>
+    <div class="card">
+      <div class="field" style="margin:0"><label>Nazivi namirnica</label>
+        <div class="chips" id="langChips" style="margin:0"><button class="chip" data-l="sr">Srpski</button><button class="chip" data-l="en">English</button></div>
+      </div>
+    </div>
+    <div class="card" id="themeCard">
+      <div class="field" style="margin:0"><label>Tema</label>
+        <div class="chips" id="themeChips" style="margin:0"><button class="chip" data-t="auto">Automatski</button><button class="chip" data-t="light">Svetla</button><button class="chip" data-t="dark">Tamna</button></div>
+      </div>
+    </div>
+    <details class="card" id="usdaCard">
+      <summary>Dodatna baza: USDA (opciono)</summary>
+      <div style="margin-top:12px">
+        <p class="hint">Open Food Facts radi bez ključa. Za američku USDA bazu napravi besplatan ključ na <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">fdc.nal.usda.gov</a> i nalepi ga ovde.</p>
+        <div class="field"><input id="usdaKey" type="text" autocomplete="off" spellcheck="false" placeholder="USDA API ključ"></div>
+        <button class="btn ghost block" id="saveKey">Sačuvaj ključ</button>
+      </div>
+    </details>
+    <div class="card">
+      <div class="list-title" style="margin-top:0">Podaci</div>
+      <p class="hint" id="dataHint">Podaci se čuvaju na ovom uređaju. Napravi rezervnu kopiju povremeno.</p>
+      <div class="row-btns"><button class="btn ghost" id="exportBtn">Izvezi kopiju</button><button class="btn ghost" id="importBtn">Uvezi kopiju</button></div>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <div class="row-btns" style="margin-top:10px"><button class="btn danger" id="resetBtn">Obriši sve podatke</button></div>
+    </div>
+    <p class="hint" style="text-align:center">Vrednosti su procene. Za medicinske odluke pitaj lekara ili nutricionistu.<br>Podaci o hrani: ugrađena baza · Open Food Facts · USDA · Claude</p>
+  </section>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button class="on" data-v="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 8h6M8 12h6"/></svg>Danas</button>
+  <button data-v="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Napredak</button>
+  <button class="plus" id="plusBtn" aria-label="Dodaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button data-v="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profil</button>
+</nav>
+
+<input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r0 = n => Math.round(n || 0);
+const r1 = n => Math.round((n || 0) * 10) / 10;
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isFinite(n) ? n : 0; };
+const fmt = n => r0(n).toLocaleString('sr-RS');
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(12); } catch (e) {} };
+
+/* ---------- state ---------- */
+const LS = 'bite.v1', OLD_LS = 'zalogaj.v1';
+const SLOGAN = 'Kalorije na srpskom. Bez naloga, bez reklama.';
+const DEFAULT_SETTINGS = { goal: 2000, pPct: 30, cPct: 40, fPct: 30, usdaKey: '', theme: 'auto', lang: 'sr', waterGoal: 8, glassMl: 250, exAdds: true, fastHours: 16,
+  profile: { sex: 'm', age: 25, h: 180, w: 80, act: 1.55, pace: 0 } };
+let S = load();
+function load() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(LS) || localStorage.getItem(OLD_LS)); } catch (e) {}
+  return normalize(d);
+}
+function normalize(d) {
+  d = d && typeof d === 'object' ? d : {};
+  const st = d.settings || {};
+  d.settings = Object.assign({}, DEFAULT_SETTINGS, st, { profile: Object.assign({}, DEFAULT_SETTINGS.profile, st.profile || {}) });
+  d.days = d.days || {}; d.recents = d.recents || []; d.custom = d.custom || []; d.weights = d.weights || {};
+  d.fast = d.fast || { start: null, log: [] };
+  for (const k in d.days) { const x = d.days[k]; x.items = x.items || []; x.water = x.water || 0; x.ex = x.ex || []; }
+  return d;
+}
+function day(k) { return S.days[k] || (S.days[k] = { items: [], water: 0, ex: [] }); }
+function peek(k) { return S.days[k] || { items: [], water: 0, ex: [] }; }
+function save() {
+  try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { if (!cloud) toast('Ne mogu da sačuvam podatke u ovom pregledaču'); }
+  syncCloud();
+}
+
+/* ---------- claude.ai runtime (only when opened as a published Artifact) ---------- */
+// Each day is its own document in the viewer's private subtree, plus one "state" doc.
+const IN_CLAUDE = !!(window.claude && window.claude.use);
+let cloud = null, sampler = null, saver = null, chain = Promise.resolve();
+const synced = {};
+function cloudDocs() {
+  const docs = { state: { settings: S.settings, recents: S.recents, custom: S.custom, weights: S.weights, fast: S.fast } };
+  for (const k in S.days) docs['d-' + k] = S.days[k];
+  return docs;
+}
+function syncCloud() {
+  if (!cloud) return;
+  for (const [id, body] of Object.entries(cloudDocs())) {
+    const j = JSON.stringify(body);
+    if (synced[id] === j) continue;
+    synced[id] = j;
+    chain = chain.then(() => cloud.doc(id).set(JSON.parse(j))).catch(e => {
+      delete synced[id];
+      toast(e && e.code === 'quota_exceeded' ? 'Prostor za podatke je pun. Izvezi kopiju i obriši stare dane.' : 'Čuvanje na nalogu nije uspelo. Probaj ponovo.');
+    });
+  }
+}
+async function initClaude() {
+  if (!IN_CLAUDE) return;
+  claude.use('sample').then(s => { sampler = s; rerender(); }).catch(() => {});
+  claude.use('downloads').then(d => { saver = d; }).catch(() => {});
+  try {
+    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+    if (!db || !user) return;
+    const uid = await user.id(); if (!uid) return;
+    const col = db.collection('data/users/' + uid);
+    const snap = await col.limit(1000).get();
+    if (!snap.empty) {
+      const merged = Object.assign({}, S, { days: Object.assign({}, S.days) });
+      snap.docs.forEach(d => {
+        const b = d.data() || {};
+        if (d.id === 'state') Object.assign(merged, { settings: b.settings, recents: b.recents, custom: b.custom, weights: b.weights, fast: b.fast });
+        else if (d.id.startsWith('d-')) merged.days[d.id.slice(2)] = b;
+        synced[d.id] = '';
+      });
+      S = normalize(merged);
+      const local = cloudDocs();
+      for (const id in synced) if (local[id]) synced[id] = JSON.stringify(local[id]);
+      try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+    }
+    cloud = col;
+    $('#dataHint').textContent = 'Podaci se čuvaju na tvom Claude nalogu i vide se na svakom uređaju gde otvoriš Bite.';
+    syncCloud();
+    rerender();
+  } catch (e) { /* stay on local storage */ }
+}
+
+/* ---------- dates ---------- */
+const MONTHS = ['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
+const WD = ['ned','pon','uto','sre','čet','pet','sub'];
+const WDL = ['Nedelja','Ponedeljak','Utorak','Sreda','Četvrtak','Petak','Subota'];
+const keyOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const dateOf = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (k, n) => { const d = dateOf(k); d.setDate(d.getDate()+n); return keyOf(d); };
+const today = () => keyOf(new Date());
+const dayDiff = (a, b) => Math.round((dateOf(b) - dateOf(a)) / 864e5);
+function label(k) {
+  const d = dateOf(k), t = today();
+  const lbl = k === t ? 'Danas' : k === addDays(t, -1) ? 'Juče' : k === addDays(t, 1) ? 'Sutra' : WDL[d.getDay()];
+  return { lbl, sub: `${d.getDate()}. ${MONTHS[d.getMonth()]}` };
+}
+let cur = today(), weekEnd = today();
+
+/* ---------- nutrition math ---------- */
+const MEALS = [
+  { id:'breakfast', name:'Doručak', em:'☀️' }, { id:'lunch', name:'Ručak', em:'🥗' },
+  { id:'dinner', name:'Večera', em:'🌙' }, { id:'snack', name:'Užine', em:'🍓' },
+];
+const mealName = id => (MEALS.find(m => m.id === id) || MEALS[3]).name;
+const nutr = it => { const f = it.grams / 100, p = it.per100; return { kcal: p.kcal*f, p: p.p*f, c: p.c*f, f: p.f*f }; };
+const totals = items => items.reduce((t, it) => { const n = nutr(it); t.kcal+=n.kcal; t.p+=n.p; t.c+=n.c; t.f+=n.f; return t; }, {kcal:0,p:0,c:0,f:0});
+const exKcal = k => peek(k).ex.reduce((s, e) => s + (e.kcal || 0), 0);
+const budget = k => S.settings.goal + (S.settings.exAdds ? exKcal(k) : 0);
+const macroGoals = () => { const s = S.settings; return { p: s.goal*s.pPct/400, c: s.goal*s.cPct/400, f: s.goal*s.fPct/900 }; };
+const guessMeal = () => { const h = new Date().getHours(); return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : h < 21 ? 'dinner' : 'snack'; };
+function bmrTdee(p) {
+  const bmr = 10 * num(p.w) + 6.25 * num(p.h) - 5 * num(p.age) + (p.sex === 'm' ? 5 : -161);
+  return { bmr, tdee: bmr * num(p.act) };
+}
+const paceKcal = pace => num(pace) * 7700 / 7;
+const floorKcal = () => S.settings.profile.sex === "f" ? 1200 : 1500;
+const smartGoal = tdee => Math.max(floorKcal(), Math.round((tdee + paceKcal(S.settings.profile.pace)) / 10) * 10);
+function calcGoal(p) { return Math.max(p.sex === 'm' ? 1500 : 1200, Math.round((bmrTdee(p).tdee + paceKcal(p.pace)) / 10) * 10); }
+
+/* ---------- built-in foods ---------- */
+// [category, Serbian name, English name, kcal, protein, carbs, fat, serving label, serving grams, icon]
+const CATS = [
+  ['dairy', 'Jaja i mlečno', '🥚'], ['meat', 'Meso', '🍗'], ['fish', 'Riba', '🐟'], ['grain', 'Hleb i žitarice', '🍞'],
+  ['veg', 'Povrće i mahunarke', '🥦'], ['fruit', 'Voće', '🍎'], ['nuts', 'Orašasto, ulja, sosovi', '🥜'],
+  ['sweet', 'Slatkiši i grickalice', '🍫'], ['drink', 'Pića', '🥤'], ['dish', 'Gotova jela', '🍲'],
+];
+const FOOD_TABLE = [
+  ['dairy','Jaje, kuvano','Egg, boiled',155,12.6,1.1,10.6,'1 jaje',50,'🥚'],
+  ['dairy','Jaje, prženo','Egg, fried',196,13.6,0.8,15,'1 jaje',46,'🍳'],
+  ['dairy','Belance','Egg white',52,10.9,0.7,0.2,'1 belance',33,'🥚'],
+  ['dairy','Omlet','Omelette',154,10.6,0.6,11.7,'2 jaja',110,'🍳'],
+  ['dairy','Mleko 2,8%','Milk 2.8%',58,3.3,4.7,2.8,'čaša',250,'🥛'],
+  ['dairy','Mleko 0,5%','Skim milk',35,3.4,5,0.2,'čaša',250,'🥛'],
+  ['dairy','Jogurt 2,8%','Plain yogurt',60,3.3,4.5,2.8,'čaša',180,'🥛'],
+  ['dairy','Grčki jogurt 2%','Greek yogurt 2%',73,9.9,3.9,2,'čaša',170,'🥄'],
+  ['dairy','Grčki jogurt, punomasni','Greek yogurt, full fat',97,9,4,5,'čaša',170,'🥄'],
+  ['dairy','Kiselo mleko','Sour milk',60,3.2,4.3,3.2,'čaša',180,'🥛'],
+  ['dairy','Kefir','Kefir',55,3.3,4,3,'čaša',250,'🥛'],
+  ['dairy','Pavlaka 20%','Sour cream 20%',205,2.8,3.6,20,'kašika',20,'🥄'],
+  ['dairy','Mladi sir','Cottage cheese',98,11,3.4,4.3,'porcija',100,'🧀'],
+  ['dairy','Sitni sir, posni','Low-fat cottage cheese',72,12.4,2.7,1,'porcija',100,'🧀'],
+  ['dairy','Feta sir','Feta cheese',264,14,4,21,'kocka',30,'🧀'],
+  ['dairy','Beli sir, kravlji','White brined cheese',260,17,1,21,'parče',50,'🧀'],
+  ['dairy','Gauda','Gouda cheese',356,25,2.2,27,'kriška',20,'🧀'],
+  ['dairy','Kačkavalj','Kashkaval cheese',360,25,1.5,28,'kriška',20,'🧀'],
+  ['dairy','Mocarela','Mozzarella',280,28,3,17,'kuglica',125,'🧀'],
+  ['dairy','Parmezan','Parmesan',431,38,4,29,'kašika',5,'🧀'],
+  ['dairy','Krem sir','Cream cheese',342,6,4,34,'kašika',20,'🧀'],
+  ['dairy','Kajmak','Kaymak',380,4,3,39,'kašika',20,'🧈'],
+  ['dairy','Puter','Butter',717,0.9,0.1,81,'kašičica',5,'🧈'],
+  ['dairy','Protein u prahu (whey)','Whey protein powder',390,78,8,6,'merica',30,'💪'],
+
+  ['meat','Piletina, belo meso (pečeno)','Chicken breast, cooked',165,31,0,3.6,'porcija',150,'🍗'],
+  ['meat','Piletina, belo meso (sirovo)','Chicken breast, raw',120,22.5,0,2.6,'porcija',150,'🍗'],
+  ['meat','Pileći batak, pečen','Chicken thigh, roasted',209,26,0,10.9,'1 kom',90,'🍗'],
+  ['meat','Pileća krilca, pečena','Chicken wings, roasted',254,24,0,17,'1 kom',35,'🍗'],
+  ['meat','Ćureća prsa, pečena','Turkey breast, cooked',135,30,0,1,'porcija',150,'🦃'],
+  ['meat','Junetina mlevena, pečena','Ground beef, cooked',250,26,0,15,'porcija',150,'🥩'],
+  ['meat','Junetina mlevena, sirova (15% masti)','Ground beef, raw 15% fat',215,18.6,0,15,'porcija',150,'🥩'],
+  ['meat','Biftek, pečen','Beef steak, cooked',250,26,0,16,'porcija',200,'🥩'],
+  ['meat','Svinjski file, pečen','Pork loin, cooked',242,27,0,14,'porcija',150,'🥩'],
+  ['meat','Svinjski vrat, pečen','Pork neck, grilled',290,24,0,21,'porcija',150,'🥩'],
+  ['meat','Jagnjetina, pečena','Roast lamb',294,25,0,21,'porcija',150,'🍖'],
+  ['meat','Teletina, pečena','Roast veal',196,31,0,7,'porcija',150,'🍖'],
+  ['meat','Pileća jetra','Chicken liver, cooked',167,24,0.9,6.5,'porcija',100,'🍖'],
+  ['meat','Slanina, pržena','Bacon, cooked',541,37,1.4,42,'kriška',8,'🥓'],
+  ['meat','Šunka','Ham, sliced',145,21,1.5,6,'kriška',15,'🥓'],
+  ['meat','Pileća prsa, narezak','Chicken breast, deli slices',100,19,2,2,'kriška',15,'🥪'],
+  ['meat','Pršut','Prosciutto',250,26,0,16,'kriška',10,'🥓'],
+  ['meat','Kulen','Kulen sausage',430,24,1,37,'kriška',10,'🌶️'],
+  ['meat','Čajna kobasica / salama','Dry salami',425,22,1.5,37,'kriška',10,'🍖'],
+  ['meat','Viršla','Hot dog sausage',290,11,3,26,'1 kom',50,'🌭'],
+  ['meat','Ćevapi','Cevapi',270,17,3,21,'10 kom',230,'🍢'],
+  ['meat','Pljeskavica','Pljeskavica (burger patty)',260,17,4,20,'1 kom',150,'🍔'],
+
+  ['fish','Losos, pečen','Salmon, cooked',208,20,0,13,'porcija',150,'🐟'],
+  ['fish','Tunjevina u sopstvenom soku','Tuna in water',116,26,0,0.8,'konzerva',120,'🐟'],
+  ['fish','Tunjevina u ulju','Tuna in oil',198,29,0,8.2,'konzerva',120,'🐟'],
+  ['fish','Sardine u ulju','Sardines in oil',208,25,0,11.5,'konzerva',90,'🐟'],
+  ['fish','Oslić, pečen','Hake, cooked',95,19,0,1.5,'porcija',150,'🐟'],
+  ['fish','Bakalar, pečen','Cod, cooked',105,23,0,0.9,'porcija',150,'🐟'],
+  ['fish','Pastrmka, pečena','Trout, cooked',190,26.6,0,8.5,'porcija',150,'🐟'],
+  ['fish','Skuša, pečena','Mackerel, cooked',262,24,0,18,'porcija',150,'🐟'],
+  ['fish','Škampi, kuvani','Shrimp, cooked',99,24,0.2,0.3,'porcija',100,'🦐'],
+  ['fish','Lignje','Squid',92,15.6,3,1.4,'porcija',150,'🦑'],
+
+  ['grain','Hleb, beli','White bread',265,9,49,3.2,'kriška',30,'🍞'],
+  ['grain','Hleb, integralni','Whole wheat bread',247,13,41,3.4,'kriška',30,'🍞'],
+  ['grain','Hleb, raženi','Rye bread',259,8.5,48,3.3,'kriška',30,'🍞'],
+  ['grain','Kifla','Bread roll',290,9,54,4,'1 kom',50,'🥐'],
+  ['grain','Lepinja','Flatbread (lepinja)',275,9,55,1.5,'1 kom',100,'🫓'],
+  ['grain','Tortilja','Flour tortilla',312,8,52,8,'1 kom',60,'🌯'],
+  ['grain','Pirinač beli, kuvan','White rice, cooked',130,2.7,28,0.3,'šolja',160,'🍚'],
+  ['grain','Pirinač braon, kuvan','Brown rice, cooked',123,2.7,25.6,1,'šolja',160,'🍚'],
+  ['grain','Pirinač, sirov','White rice, uncooked',360,6.6,79,0.6,'porcija',75,'🍚'],
+  ['grain','Testenina, kuvana','Pasta, cooked',158,5.8,31,0.9,'tanjir',200,'🍝'],
+  ['grain','Testenina, suva','Pasta, dry',371,13,75,1.5,'porcija',80,'🍝'],
+  ['grain','Ovsene pahuljice','Rolled oats',389,16.9,66,6.9,'porcija',40,'🥣'],
+  ['grain','Kukuruzne pahuljice','Corn flakes',357,7.5,84,0.4,'porcija',30,'🥣'],
+  ['grain','Musli','Muesli',370,10,66,6,'porcija',50,'🥣'],
+  ['grain','Granola','Granola',471,10,64,20,'porcija',50,'🥣'],
+  ['grain','Kinoa, kuvana','Quinoa, cooked',120,4.4,21,1.9,'šolja',185,'🌾'],
+  ['grain','Kus-kus, kuvan','Couscous, cooked',112,3.8,23,0.2,'šolja',160,'🌾'],
+  ['grain','Heljda, kuvana','Buckwheat, cooked',92,3.4,20,0.6,'šolja',170,'🌾'],
+  ['grain','Palenta, kuvana','Polenta, cooked',70,1.6,15,0.3,'tanjir',250,'🌽'],
+  ['grain','Brašno, belo','Wheat flour',364,10,76,1,'kašika',10,'🌾'],
+  ['grain','Pirinčani krekeri','Rice cakes',387,8,81,2.8,'1 kom',9,'🍘'],
+  ['grain','Kroasan','Croissant',406,8,46,21,'1 kom',60,'🥐'],
+  ['grain','Pogača','Pogacha (bread)',300,8,50,7,'parče',80,'🍞'],
+
+  ['veg','Krompir, kuvan','Potato, boiled',87,1.9,20,0.1,'1 kom',150,'🥔'],
+  ['veg','Krompir, pečen','Potato, baked',93,2.5,21,0.1,'1 kom',150,'🥔'],
+  ['veg','Pire krompir','Mashed potatoes',106,2,16,4,'porcija',200,'🥔'],
+  ['veg','Pomfrit','French fries',312,3.4,41,15,'porcija',120,'🍟'],
+  ['veg','Batat, pečen','Sweet potato, baked',90,2,21,0.2,'1 kom',150,'🍠'],
+  ['veg','Paradajz','Tomato',18,0.9,3.9,0.2,'1 kom',120,'🍅'],
+  ['veg','Krastavac','Cucumber',15,0.7,3.6,0.1,'1 kom',200,'🥒'],
+  ['veg','Paprika, crvena','Red bell pepper',31,1,6,0.3,'1 kom',120,'🫑'],
+  ['veg','Zelena salata','Lettuce',15,1.4,2.9,0.2,'porcija',80,'🥬'],
+  ['veg','Kupus','Cabbage',25,1.3,5.8,0.1,'porcija',100,'🥬'],
+  ['veg','Kiseli kupus','Sauerkraut',19,0.9,4.3,0.1,'porcija',100,'🥬'],
+  ['veg','Šargarepa','Carrot',41,0.9,9.6,0.2,'1 kom',60,'🥕'],
+  ['veg','Crni luk','Onion',40,1.1,9.3,0.1,'1 kom',110,'🧅'],
+  ['veg','Beli luk','Garlic',149,6.4,33,0.5,'čen',4,'🧄'],
+  ['veg','Brokoli','Broccoli',34,2.8,6.6,0.4,'porcija',100,'🥦'],
+  ['veg','Karfiol','Cauliflower',25,1.9,5,0.3,'porcija',100,'🥦'],
+  ['veg','Spanać','Spinach',23,2.9,3.6,0.4,'porcija',100,'🥬'],
+  ['veg','Tikvica','Zucchini',17,1.2,3.1,0.3,'1 kom',200,'🥒'],
+  ['veg','Plavi patlidžan','Eggplant',25,1,6,0.2,'1 kom',300,'🍆'],
+  ['veg','Pečurke','Mushrooms',22,3.1,3.3,0.3,'porcija',100,'🍄'],
+  ['veg','Kukuruz šećerac','Sweet corn',86,3.3,19,1.4,'porcija',100,'🌽'],
+  ['veg','Grašak','Green peas',81,5.4,14,0.4,'porcija',100,'🫛'],
+  ['veg','Boranija','Green beans',31,1.8,7,0.2,'porcija',100,'🫛'],
+  ['veg','Cvekla','Beetroot',43,1.6,9.6,0.2,'1 kom',80,'🥗'],
+  ['veg','Rotkvica','Radish',16,0.7,3.4,0.1,'porcija',50,'🌱'],
+  ['veg','Avokado','Avocado',160,2,8.5,14.7,'1/2 kom',75,'🥑'],
+  ['veg','Masline','Olives',115,0.8,6,10.7,'10 kom',30,'🫒'],
+  ['veg','Ajvar','Ajvar (pepper relish)',95,1.5,8,6,'kašika',20,'🌶️'],
+  ['veg','Pasulj, kuvan','Kidney beans, cooked',127,8.7,22.8,0.5,'porcija',150,'🫘'],
+  ['veg','Sočivo, kuvano','Lentils, cooked',116,9,20,0.4,'porcija',150,'🫘'],
+  ['veg','Leblebije, kuvane','Chickpeas, cooked',164,8.9,27,2.6,'porcija',150,'🫘'],
+  ['veg','Humus','Hummus',166,7.9,14,9.6,'kašika',30,'🫘'],
+  ['veg','Tofu','Tofu',76,8,1.9,4.8,'porcija',100,'🧊'],
+
+  ['fruit','Banana','Banana',89,1.1,23,0.3,'1 kom',120,'🍌'],
+  ['fruit','Jabuka','Apple',52,0.3,14,0.2,'1 kom',180,'🍎'],
+  ['fruit','Kruška','Pear',57,0.4,15,0.1,'1 kom',170,'🍐'],
+  ['fruit','Pomorandža','Orange',47,0.9,12,0.1,'1 kom',140,'🍊'],
+  ['fruit','Mandarina','Tangerine',53,0.8,13,0.3,'1 kom',80,'🍊'],
+  ['fruit','Grožđe','Grapes',69,0.7,18,0.2,'grozd',150,'🍇'],
+  ['fruit','Jagode','Strawberries',32,0.7,7.7,0.3,'šolja',150,'🍓'],
+  ['fruit','Borovnice','Blueberries',57,0.7,14,0.3,'šolja',150,'🫐'],
+  ['fruit','Maline','Raspberries',52,1.2,12,0.7,'šolja',125,'🫐'],
+  ['fruit','Lubenica','Watermelon',30,0.6,7.6,0.2,'kriška',300,'🍉'],
+  ['fruit','Dinja','Cantaloupe melon',34,0.8,8.2,0.2,'kriška',200,'🍈'],
+  ['fruit','Breskva','Peach',39,0.9,9.5,0.3,'1 kom',150,'🍑'],
+  ['fruit','Šljiva','Plum',46,0.7,11.4,0.3,'1 kom',65,'🫐'],
+  ['fruit','Kajsija','Apricot',48,1.4,11,0.4,'1 kom',35,'🍑'],
+  ['fruit','Trešnje','Cherries',63,1.1,16,0.2,'šolja',140,'🍒'],
+  ['fruit','Kivi','Kiwi',61,1.1,15,0.5,'1 kom',75,'🥝'],
+  ['fruit','Ananas','Pineapple',50,0.5,13,0.1,'kriška',85,'🍍'],
+  ['fruit','Mango','Mango',60,0.8,15,0.4,'1 kom',200,'🥭'],
+  ['fruit','Limun','Lemon',29,1.1,9.3,0.3,'1 kom',60,'🍋'],
+  ['fruit','Suve šljive','Prunes',240,2.2,64,0.4,'5 kom',40,'🫐'],
+  ['fruit','Urme','Dates',282,2.5,75,0.4,'1 kom',8,'🌴'],
+  ['fruit','Suvo grožđe','Raisins',299,3.1,79,0.5,'šaka',30,'🍇'],
+
+  ['nuts','Bademi','Almonds',579,21,22,50,'šaka',30,'🌰'],
+  ['nuts','Orasi','Walnuts',654,15,14,65,'šaka',30,'🌰'],
+  ['nuts','Lešnici','Hazelnuts',628,15,17,61,'šaka',30,'🌰'],
+  ['nuts','Kikiriki','Peanuts',567,26,16,49,'šaka',30,'🥜'],
+  ['nuts','Indijski orah','Cashews',553,18,30,44,'šaka',30,'🥜'],
+  ['nuts','Semenke suncokreta','Sunflower seeds',584,21,20,51,'šaka',30,'🌻'],
+  ['nuts','Bundevine semenke','Pumpkin seeds',559,30,11,49,'šaka',30,'🎃'],
+  ['nuts','Čia semenke','Chia seeds',486,17,42,31,'kašika',12,'🌱'],
+  ['nuts','Laneno seme','Flaxseed',534,18,29,42,'kašika',10,'🌱'],
+  ['nuts','Kikiriki puter','Peanut butter',588,25,20,50,'kašika',16,'🥜'],
+  ['nuts','Maslinovo ulje','Olive oil',884,0,0,100,'kašika',14,'🫒'],
+  ['nuts','Suncokretovo ulje','Sunflower oil',884,0,0,100,'kašika',14,'🌻'],
+  ['nuts','Majonez','Mayonnaise',680,1,0.6,75,'kašika',15,'🥚'],
+  ['nuts','Kečap','Ketchup',101,1,27,0.1,'kašika',15,'🍅'],
+  ['nuts','Senf','Mustard',66,4,6,3.3,'kašičica',5,'🌭'],
+
+  ['sweet','Mlečna čokolada','Milk chocolate',535,7.7,59,30,'kocka',5,'🍫'],
+  ['sweet','Crna čokolada 70%','Dark chocolate 70%',598,7.8,46,43,'kocka',5,'🍫'],
+  ['sweet','Krem od lešnika (Nutella)','Hazelnut spread (Nutella)',539,6.3,57.5,30.9,'kašika',15,'🍫'],
+  ['sweet','Med','Honey',304,0.3,82,0,'kašika',21,'🍯'],
+  ['sweet','Šećer','Sugar',387,0,100,0,'kašičica',4,'🧂'],
+  ['sweet','Džem','Jam',250,0.4,63,0.1,'kašika',20,'🍓'],
+  ['sweet','Keks (petit beurre)','Butter biscuits',440,7,72,13,'1 kom',6,'🍪'],
+  ['sweet','Čips','Potato chips',536,7,53,34,'kesica',40,'🥔'],
+  ['sweet','Flips od kikirikija','Peanut puffs',530,14,51,30,'kesica',50,'🥜'],
+  ['sweet','Kokice','Popcorn (oil-popped)',500,9,57,28,'činija',30,'🍿'],
+  ['sweet','Sladoled','Ice cream',207,3.5,24,11,'kugla',60,'🍨'],
+  ['sweet','Krofna','Donut',421,5.7,49,23,'1 kom',60,'🍩'],
+  ['sweet','Palačinka, obična','Crêpe, plain',227,6,28,10,'1 kom',50,'🥞'],
+  ['sweet','Baklava','Baklava',430,7,50,23,'parče',60,'🍯'],
+  ['sweet','Proteinska pločica','Protein bar',380,30,40,12,'1 kom',50,'💪'],
+  ['sweet','Žitna pločica','Granola bar',470,10,64,20,'1 kom',25,'🌾'],
+
+  ['drink','Kafa, crna','Black coffee',2,0.1,0,0,'šolja',200,'☕'],
+  ['drink','Kafa sa mlekom (late)','Caffe latte',42,2.7,4.1,1.6,'šolja',250,'☕'],
+  ['drink','Čaj, bez šećera','Tea, unsweetened',1,0,0.2,0,'šolja',250,'🍵'],
+  ['drink','Sok od pomorandže','Orange juice',45,0.7,10.4,0.2,'čaša',250,'🧃'],
+  ['drink','Gazirani sok (kola)','Soda (cola)',42,0,10.6,0,'limenka',330,'🥤'],
+  ['drink','Pivo','Beer',43,0.5,3.6,0,'flaša',500,'🍺'],
+  ['drink','Vino, crno','Red wine',85,0.1,2.6,0,'čaša',150,'🍷'],
+  ['drink','Vino, belo','White wine',82,0.1,2.6,0,'čaša',150,'🥂'],
+  ['drink','Rakija','Rakija (fruit brandy)',231,0,0,0,'čašica',30,'🥃'],
+  ['drink','Energetsko piće','Energy drink',45,0,11,0,'limenka',250,'⚡'],
+
+  ['dish','Sarma','Sarma (cabbage rolls)',150,8,8,10,'1 kom',150,'🥬'],
+  ['dish','Musaka','Moussaka',150,7,10,9,'porcija',300,'🍆'],
+  ['dish','Pasulj, prebranac / čorba','Bean stew',110,6,15,3,'tanjir',350,'🫘'],
+  ['dish','Gulaš','Goulash',120,10,5,7,'tanjir',300,'🍲'],
+  ['dish','Pileća supa','Chicken soup',35,3,3,1.2,'tanjir',300,'🍜'],
+  ['dish','Špagete bolonjeze','Spaghetti bolognese',150,8,18,5,'tanjir',350,'🍝'],
+  ['dish','Karađorđeva šnicla','Karadjordje schnitzel',280,18,12,18,'1 kom',250,'🍖'],
+  ['dish','Bečka šnicla','Wiener schnitzel',260,17,13,15,'1 kom',150,'🍖'],
+  ['dish','Šopska salata','Shopska salad',90,3.5,4,7,'porcija',250,'🥗'],
+  ['dish','Burek sa sirom','Burek with cheese',290,9,25,17,'parče',200,'🥧'],
+  ['dish','Burek sa mesom','Burek with meat',300,10,24,18,'parče',200,'🥧'],
+  ['dish','Gibanica','Gibanica (cheese pie)',280,9,22,17,'parče',150,'🥧'],
+  ['dish','Pica margarita','Pizza margherita',250,11,31,9,'parče',110,'🍕'],
+  ['dish','Hamburger','Hamburger',250,13,24,11,'1 kom',220,'🍔'],
+  ['dish','Sendvič sa šunkom i sirom','Ham and cheese sandwich',260,13,28,10,'1 kom',150,'🥪'],
+  ['dish','Giros','Gyros wrap',220,11,22,10,'1 kom',350,'🌯'],
+  ['dish','Cezar salata','Caesar salad',150,7,6,11,'porcija',250,'🥗'],
+  ['dish','Pečena piletina sa krompirom','Roast chicken with potatoes',170,13,12,8,'porcija',350,'🍗'],
+  // domaća jela i balkanske namirnice (okvirne vrednosti na 100 g)
+  ['dish','Pljeskavica, pečena','Pljeskavica',250,18,2,19,'1 komad',180,'🍖'],
+  ['dish','Gurmanska pljeskavica','Gourmet pljeskavica',290,19,2,23,'1 komad',200,'🍔'],
+  ['dish','Ćevapi u lepinji','Cevapi in lepinja',250,13,24,11,'1 porcija',350,'🥙'],
+  ['dish','Pljeskavica u lepinji','Pljeskavica in lepinja',240,13,22,11,'1 porcija',400,'🥙'],
+  ['dish','Ćufte u paradajz sosu','Meatballs in tomato sauce',140,10,7,8,'porcija',250,'🍝'],
+  ['dish','Punjene paprike','Stuffed peppers',110,6,10,5,'1 paprika',250,'🫑'],
+  ['dish','Đuveč','Djuvec',95,3,12,4,'porcija',300,'🍲'],
+  ['dish','Pileći paprikaš','Chicken paprikash',130,11,4,8,'porcija',300,'🍲'],
+  ['dish','Tavče gravče','Tavche gravche (baked beans)',115,6,15,3.5,'porcija',300,'🍲'],
+  ['dish','Teleća čorba','Veal soup',45,4,3,2,'tanjir',300,'🍲'],
+  ['dish','Riblja čorba','Fish stew',70,8,4,2.5,'tanjir',300,'🍲'],
+  ['dish','Mućkalica','Muckalica',160,12,5,10,'porcija',300,'🍲'],
+  ['dish','Podvarak','Podvarak',130,10,6,7,'porcija',300,'🍲'],
+  ['dish','Grašak sa mesom','Pea stew with meat',100,7,9,4,'porcija',300,'🍲'],
+  ['dish','Kačamak','Kachamak (cornmeal)',120,3,18,4,'porcija',250,'🌽'],
+  ['dish','Popara','Popara',130,5,18,4,'tanjir',300,'🍞'],
+  ['dish','Pohovana piletina','Breaded chicken',230,17,14,12,'1 šnicla',150,'🍗'],
+  ['dish','Ruska salata','Russian salad',180,4,10,14,'porcija',150,'🥗'],
+  ['dish','Pita sirnica','Cheese pie (sirnica)',280,10,26,15,'parče',150,'🥧'],
+  ['dish','Pita zeljanica','Spinach pie (zeljanica)',220,7,23,11,'parče',150,'🥧'],
+  ['dish','Pita krompiruša','Potato pie',240,5,27,12,'parče',150,'🥧'],
+  ['dish','Pita sa jabukama','Apple pie (Balkan)',210,3,32,8,'parče',120,'🥧'],
+  ['meat','Svinjsko pečenje','Roast pork',290,22,0,22,'porcija',150,'🥩'],
+  ['meat','Prasetina','Roast suckling pig',300,24,0,22,'porcija',150,'🥩'],
+  ['meat','Domaća kobasica','Homemade sausage',320,17,2,27,'1 komad',100,'🌭'],
+  ['meat','Pršuta','Prosciutto (prsut)',250,28,0,16,'kriška',20,'🥓'],
+  ['meat','Suvi vrat','Dried pork neck',330,28,1,24,'kriška',20,'🥓'],
+  ['meat','Slanina','Bacon (slanina)',500,12,0,50,'kriška',20,'🥓'],
+  ['meat','Čvarci','Pork cracklings',560,35,0,46,'šaka',30,'🥓'],
+  ['dairy','Ajran','Ayran',40,2.5,3.5,1.8,'čaša',250,'🥛'],
+  ['grain','Proja','Corn bread (proja)',240,7,30,10,'parče',100,'🌽'],
+  ['grain','Lepinja (somun)','Lepinja flatbread',260,9,52,1.5,'1 lepinja',200,'🫓'],
+  ['grain','Uštipci','Ustipci (fried dough)',320,7,38,15,'1 komad',50,'🍩'],
+  ['veg','Salata od kupusa','Cabbage salad',45,1.5,6,1.8,'porcija',150,'🥗'],
+  ['veg','Urnebes salata','Urnebes salad',170,7,4,14,'porcija',60,'🥗'],
+  ['veg','Turšija','Pickled vegetables',25,1,5,0.2,'porcija',100,'🥒'],
+  ['sweet','Palačinka sa džemom','Crepe with jam',210,4,35,6,'1 komad',100,'🥞'],
+  ['sweet','Tulumba','Tulumba',350,3,50,15,'1 komad',40,'🍯'],
+  ['sweet','Vanilice','Vanilice cookies',460,5,62,21,'1 komad',15,'🍪'],
+];
+// everyday words that should land on one specific entry when nothing matches exactly
+const ALIASES = [
+  ['na oko', 'Jaje, prženo'], ['jaje na oko', 'Jaje, prženo'], ['kajgana', 'Omlet'], ['jaja', 'Jaje, kuvano'], ['eggs', 'Jaje, kuvano'],
+  ['sir', 'Beli sir, kravlji'], ['hleb', 'Hleb, beli'], ['hleba', 'Hleb, beli'], ['bread', 'Hleb, beli'], ['tost', 'Hleb, beli'],
+  ['pirinac', 'Pirinač beli, kuvan'], ['riza', 'Pirinač beli, kuvan'], ['rice', 'Pirinač beli, kuvan'],
+  ['piletina', 'Piletina, belo meso (pečeno)'], ['piletine', 'Piletina, belo meso (pečeno)'], ['chicken', 'Piletina, belo meso (pečeno)'], ['batak', 'Pileći batak, pečen'],
+  ['krompir', 'Krompir, kuvan'], ['pire', 'Pire krompir'], ['testenina', 'Testenina, kuvana'], ['pasta', 'Testenina, kuvana'], ['spagete', 'Testenina, kuvana'],
+  ['mleko', 'Mleko 2,8%'], ['milk', 'Mleko 2,8%'], ['jogurt', 'Jogurt 2,8%'], ['jogurta', 'Jogurt 2,8%'], ['skyr', 'Grčki jogurt 2%'],
+  ['kafa', 'Kafa, crna'], ['espreso', 'Kafa, crna'], ['coffee', 'Kafa, crna'], ['kafa sa mlekom', 'Kafa sa mlekom (late)'], ['kapucino', 'Kafa sa mlekom (late)'], ['nes kafa', 'Kafa sa mlekom (late)'], ['latte', 'Kafa sa mlekom (late)'],
+  ['caj', 'Čaj, bez šećera'], ['kola', 'Gazirani sok (kola)'], ['koka kola', 'Gazirani sok (kola)'], ['coca cola', 'Gazirani sok (kola)'], ['sok', 'Sok od pomorandže'],
+  ['meso', 'Junetina mlevena, pečena'], ['govedina', 'Biftek, pečen'], ['svinjetina', 'Svinjski file, pečen'], ['riba', 'Oslić, pečen'], ['tuna', 'Tunjevina u sopstvenom soku'],
+  ['salata', 'Zelena salata'], ['paradajz salata', 'Paradajz'], ['ulje', 'Suncokretovo ulje'], ['nutela', 'Krem od lešnika (Nutella)'], ['nutella', 'Krem od lešnika (Nutella)'],
+  ['pica', 'Pica margarita'], ['pizza', 'Pica margarita'], ['burek', 'Burek sa sirom'], ['pasulj', 'Pasulj, prebranac / čorba'], ['supa', 'Pileća supa'], ['corba', 'Pileća supa'],
+  ['protein', 'Protein u prahu (whey)'], ['whey', 'Protein u prahu (whey)'], ['protein sejk', 'Protein u prahu (whey)'], ['sejk', 'Protein u prahu (whey)'], ['cokolada', 'Mlečna čokolada'], ['keks', 'Keks (petit beurre)'],
+  ['luk', 'Crni luk'], ['ovsene', 'Ovsene pahuljice'], ['zobene', 'Ovsene pahuljice'], ['oats', 'Ovsene pahuljice'], ['pahuljice', 'Ovsene pahuljice'], ['kikiriki buter', 'Kikiriki puter'],
+  ['cevapi', 'Ćevapi'], ['cevap', 'Ćevapi'], ['cevapcici', 'Ćevapi'], ['pljeskavica', 'Pljeskavica, pečena'], ['kajmak', 'Kajmak'], ['ajvar', 'Ajvar'], ['sirnica', 'Pita sirnica'], ['zeljanica', 'Pita zeljanica'], ['krompirusa', 'Pita krompiruša'], ['rakija', 'Rakija'], ['pogaca', 'Pogača'], ['lepinja', 'Lepinja (somun)'], ['somun', 'Lepinja (somun)'], ['kifla', 'Kifla'], ['palacinka', 'Palačinka, obična'], ['palacinke', 'Palačinka, obična'], ['krofna', 'Krofna'], ['baklava', 'Baklava'], ['tulumba', 'Tulumba'], ['ruska salata', 'Ruska salata'], ['kupus salata', 'Salata od kupusa'], ['cvarci', 'Čvarci'], ['prsuta', 'Pršuta'], ['slanina', 'Slanina'], ['kobasica', 'Domaća kobasica'], ['djuvec', 'Đuveč'], ['paprikas', 'Pileći paprikaš'], ['podvarak', 'Podvarak'], ['kacamak', 'Kačamak'], ['popara', 'Popara'], ['ajran', 'Ajran'], ['vino', 'Vino, crno'], ['punjene paprike', 'Punjene paprike'], ['proja', 'Proja'], ['ustipci', 'Uštipci'],
+];
+const QUICK = FOOD_TABLE.map(([cat, sr, en, kcal, p, c, f, svl, svg, em]) => ({
+  name: sr, en, cat, brand: '', per100: { kcal, p, c, f }, serving: svl ? { label: svl, g: svg } : null, src: 'quick', em
+}));
+const dn = x => (S.settings.lang === 'en' && x.en) ? x.en : x.name;
+const alt = x => (S.settings.lang === 'en' ? x.name : x.en) || '';
+
+/* ---------- meal description parser ----------
+   "2 jaja na oko, 2 kriške hleba sa kajmakom" -> database items with real portion weights.
+   AI is only asked about the parts this can't match (LLMs miss calories by ~35–40%, mostly on portion size). */
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'dj');
+const STOP = new Set(['na','od','u','sa','s','i','malo','the','of','with','a','an','some','and','za','po','je','sam','jeo','jela','pojeo','pojela','popio','popila','dodatno','plus']);
+const NUMW = { jedan:1, jedna:1, jedno:1, jednu:1, jednog:1, dva:2, dve:2, dvije:2, tri:3, cetiri:4, pet:5, sest:6, sedam:7, osam:8, devet:9, deset:10, dvanaest:12, petnaest:15, dvadeset:20,
+  pola:0.5, pol:0.5, polovina:0.5, cetvrt:0.25, one:1, two:2, three:3, four:4, five:5, six:6, ten:10, half:0.5 };
+// portion words -> default grams when the food's own serving uses a different word
+const UNITW = [['kasicic',5],['kasick',5],['tsp',5],['kasik',15],['tbsp',15],['krisk',30],['slice',30],['solj',200],['cup',200],['cas',250],['glass',250],['tanjir',300],['plate',300],['bowl',300],['cinij',300],['parc',100],['piece',null],['komad',null],['kom',null],['pc',null],['sak',30],['handful',30],['porcij',null],['serving',null],['kugl',60],['scoop',30],['meric',30],['limenk',330],['can',330],['flas',500],['bottle',500],['konzerv',120],['cen',4]];
+const unitOf = t => { for (const [k, g] of UNITW) if (t.startsWith(k)) return { key: k, g }; return null; };
+const stem = w => w.length <= 3 ? w : w.length === 4 ? w.slice(0, 3) : w.slice(0, Math.max(4, w.length - 2));
+const tokMatch = (a, b) => a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(stem(b)) || b.startsWith(stem(a))));
+const toks = s => norm(s).split(/[^a-z0-9]+/).filter(t => t.length > 1 && !STOP.has(t));
+const FOOD_TOKS = QUICK.map((f, i) => ({ f, i, sr: toks(f.name), en: toks(f.en), t: toks(f.name + ' ' + f.en) }));
+const ALIAS_N = ALIASES.map(([a, name]) => [toks(a), QUICK.find(q => q.name === name), a.length]).filter(x => x[1] && x[0].length).sort((a, b) => b[2] - a[2]);
+function scoreFoods(tokens) {
+  let best = null;
+  for (const e of FOOD_TOKS) {
+    const m = tokens.filter(t => e.t.some(ft => tokMatch(t, ft))).length;
+    if (!m) continue;
+    const sp = list => list.length ? list.filter(ft => tokens.some(t => tokMatch(t, ft))).length / list.length : 0;
+    const cover = m / tokens.length, spec = Math.max(sp(e.sr), sp(e.en));
+    const s = cover * 2 + spec + (tokMatch(tokens[0], e.t[0]) ? 0.3 : 0) - e.i * 1e-5;
+    if (!best || s > best.s) best = { f: e.f, s, cover, spec };
+  }
+  return best;
+}
+function matchFood(tokens, phrase) {
+  if (!tokens.length) return null;
+  const best = scoreFoods(tokens);
+  if (best && best.cover === 1 && best.spec === 1) return best.f;
+  for (const [a, f] of ALIAS_N) if (a.every(at => tokens.some(t => tokMatch(t, at)))) return f;
+  return best && (best.cover === 1 || (best.cover >= 0.5 && best.spec >= 0.5)) ? best.f : null;
+}
+function piece(f) {
+  if (!f.serving) return null;
+  const m = f.serving.label.match(/^(\d+(?:[.,]\d+)?|1\/2)\s/);
+  const n = m ? (m[1] === '1/2' ? 0.5 : num(m[1])) : 1;
+  return f.serving.g / n;
+}
+function readQty(seg) {
+  let s = norm(seg).replace(/(\d),(\d)/g, '$1.$2').replace(/[^a-z0-9./ ]+/g, ' ');
+  let grams = null, qty = null, unit = null;
+  const wm = s.match(/(\d+(?:\.\d+)?)\s*(kg|grama|gram|gr|g|ml|dl|l)\b/);
+  if (wm) { grams = num(wm[1]) * ({ kg: 1000, dl: 100, l: 1000 }[wm[2]] || 1); s = s.replace(wm[0], ' '); }
+  const rest = [];
+  for (const t of s.split(/\s+/).filter(Boolean)) {
+    if (qty == null && /^\d+(\.\d+)?$|^1\/2$/.test(t)) { qty = t === '1/2' ? 0.5 : num(t); continue; }
+    if (qty == null && NUMW[t] != null) { qty = NUMW[t]; continue; }
+    const u = !unit && unitOf(t); if (u) { unit = u; continue; }
+    rest.push(t);
+  }
+  return { grams, qty, unit, phrase: rest.join(' ') };
+}
+function gramsFor(f, r) {
+  if (r.grams) return r.grams;
+  const q = r.qty ?? 1, own = f.serving && r.unit && norm(f.serving.label).includes(r.unit.key);
+  if (r.unit && !own) return q * (r.unit.g || piece(f) || 100);
+  if (r.qty == null) return f.serving ? f.serving.g : 100;
+  return q * (piece(f) || 100);
+}
+function parseMeal(text) {
+  const out = [], unmatched = [];
+  const segs = text.split(/\s*(?:,|;|\+|\n|\s+i\s+|\s+and\s+|\s+plus\s+)\s*/i).map(s => s.trim()).filter(Boolean);
+  for (const seg of segs) {
+    const r = readQty(seg), whole = matchFood(toks(r.phrase), r.phrase);
+    const exact = whole && (scoreFoods(toks(r.phrase)) || {}).cover === 1;
+    const parts = !exact && /\s(sa|s|with)\s/.test(' ' + r.phrase + ' ') ? seg.split(/\s+(?:sa|s|with)\s+/i) : null;
+    if (!parts) { whole ? out.push({ food: whole, grams: r0(gramsFor(whole, r)), from: seg }) : unmatched.push(seg); continue; }
+    parts.forEach((part, j) => {
+      const rp = readQty(part), f = matchFood(toks(rp.phrase), rp.phrase);
+      if (!f) { unmatched.push(part); return; }
+      // a side ("hleb sa kajmakom") without its own amount gets one small serving
+      const side = j > 0 && rp.qty == null && !rp.grams && !rp.unit, liquid = f.cat === 'drink' || /^(čaša|šolja)/.test((f.serving || {}).label || '');
+      const g = side && liquid ? Math.min(gramsFor(f, rp), 100) : gramsFor(f, rp);
+      out.push({ food: f, grams: r0(g), from: part });
+    });
+  }
+  return { items: out, unmatched };
+}
+
+/* ---------- exercises (MET values, Compendium of Physical Activities) ---------- */
+const EXERCISES = [
+  ['Hodanje', 'Walking', 3.5, '🚶'], ['Brzo hodanje', 'Brisk walking', 4.3, '🚶'], ['Trčanje (lagano)', 'Jogging', 7, '🏃'],
+  ['Trčanje (brzo)', 'Running fast', 10, '🏃'], ['Bicikl', 'Cycling', 7.5, '🚴'], ['Teretana', 'Weight training', 5, '🏋️'],
+  ['HIIT', 'HIIT', 8, '⚡'], ['Plivanje', 'Swimming', 7, '🏊'], ['Fudbal', 'Football', 7, '⚽'], ['Košarka', 'Basketball', 6.5, '🏀'],
+  ['Tenis / padel', 'Tennis / padel', 7, '🎾'], ['Joga', 'Yoga', 2.5, '🧘'], ['Pilates', 'Pilates', 3, '🧘'], ['Ples', 'Dancing', 5, '💃'],
+  ['Planinarenje', 'Hiking', 6, '🥾'], ['Sobni bicikl', 'Stationary bike', 6.8, '🚴'], ['Veslanje', 'Rowing', 7, '🚣'], ['Kućni poslovi', 'Housework', 3.3, '🧹'],
+];
+const curWeight = () => { const ks = Object.keys(S.weights).sort(); return ks.length ? S.weights[ks[ks.length - 1]] : num(S.settings.profile.w) || 75; };
+
+/* ---------- online food sources ---------- */
+const OFF_FIELDS = 'code,product_name,product_name_sr,generic_name,brands,nutriments,serving_size,serving_quantity,image_front_small_url';
+function parseOFF(p) {
+  if (!p) return null;
+  const n = p.nutriments || {};
+  let kcal = n['energy-kcal_100g'];
+  if (kcal == null && n.energy_100g != null) kcal = n.energy_100g / 4.184;
+  if (kcal == null) return null;
+  const name = (p.product_name_sr || p.product_name || p.generic_name || '').trim();
+  if (!name) return null;
+  const brand = Array.isArray(p.brands) ? p.brands.join(', ') : (p.brands || '');
+  const sq = num(p.serving_quantity);
+  return { name, brand: brand.split(',')[0].trim(), per100: { kcal: num(kcal), p: num(n.proteins_100g), c: num(n.carbohydrates_100g), f: num(n.fat_100g) },
+    serving: sq > 0 ? { label: 'porcija', g: sq } : null, img: p.image_front_small_url || '', code: p.code || '', src: 'off' };
+}
+function dedupe(list) {
+  const seen = new Set();
+  return list.filter(f => { const k = [f.name.toLowerCase(), f.brand.toLowerCase(), r0(f.per100.kcal)].join('|'); if (seen.has(k)) return false; seen.add(k); return true; });
+}
+async function fetchJSON(url, ms = 15000) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+  try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+async function searchOFF(q) {
+  if (/^\d{8,14}$/.test(q)) {
+    const d = await fetchJSON(`https://world.openfoodfacts.org/api/v2/product/${q}.json?fields=${OFF_FIELDS}`);
+    const f = d.status === 1 ? parseOFF(d.product) : null;
+    return f ? [f] : [];
+  }
+  try {
+    const d = await fetchJSON(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=30&fields=${OFF_FIELDS}`);
+    const out = dedupe((d.hits || []).map(parseOFF).filter(Boolean));
+    if (out.length) return out;
+  } catch (e) {}
+  const d = await fetchJSON(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=30&fields=${OFF_FIELDS}`);
+  return dedupe((d.products || []).map(parseOFF).filter(Boolean));
+}
+async function searchUSDA(q) {
+  const key = S.settings.usdaKey.trim(); if (!key) return [];
+  const d = await fetchJSON(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(q)}&pageSize=25&dataType=Foundation,SR%20Legacy,Branded`);
+  return (d.foods || []).map(f => {
+    const get = (...ids) => { const x = (f.foodNutrients || []).find(n => ids.includes(String(n.nutrientNumber)) || ids.includes(String(n.nutrientId))); return x ? num(x.value) : null; };
+    let kcal = get('208', '1008'); if (kcal == null) { const kj = get('268'); kcal = kj != null ? kj / 4.184 : null; }
+    if (kcal == null) return null;
+    const sv = f.servingSize && /^g$/i.test(f.servingSizeUnit || '') ? { label: 'porcija', g: num(f.servingSize) } : null;
+    return { name: f.description ? f.description.charAt(0) + f.description.slice(1).toLowerCase() : 'Namirnica', brand: f.brandOwner || f.brandName || '', per100: { kcal, p: get('203','1003') || 0, c: get('205','1005') || 0, f: get('204','1004') || 0 }, serving: sv, src: 'usda', code: String(f.fdcId) };
+  }).filter(Boolean);
+}
+
+/* ---------- Claude (AI) helpers ---------- */
+const AI_FORMAT = 'Za svaku stavku vrati objekat: {"name": naziv na srpskom (latinica), "en": naziv na engleskom, "grams": količina u gramima, "kcal": kcal na 100 g, "p": proteini g na 100 g, "c": ugljeni hidrati g na 100 g, "f": masti g na 100 g}.\n' +
+  'PRAVILA: Vrednosti na 100 g su za hranu KAKVA SE JEDE (kuvana, pečena), nikad za sirovu/suvu namirnicu, i prate USDA proseke. kcal mora biti ≈ 4×p + 4×c + 9×f. ' +
+  'Ne dodaji ništa što nije navedeno ili vidljivo (bez pretpostavljenog ulja, sosa ili priloga). Ako količina nije navedena, uzmi JEDNU uobičajenu porciju; kad nisi siguran, izaberi manju.\n' +
+  'Uobičajene porcije: jaje 50 g, kriška hleba 30 g, lepinja 100 g, kifla 50 g, šolja kuvanog pirinča ili testenine 160 g, tanjir kuvanog jela 300 g, tanjir supe 300 g, porcija mesa 150 g, ćevap 23 g po komadu, pljeskavica 150 g, parče bureka 200 g, parče pice 110 g, kašika ulja 14 g, kašika pavlake ili kajmaka 20 g, kašičica šećera 4 g, čaša pića 250 ml, voćka 120–180 g, šaka orašastih plodova 30 g.';
+// AI output is checked before it is trusted: impossible values are corrected and known foods use database values.
+function sanePer100(x) {
+  let p = Math.max(0, Math.min(100, num(x.p))), c = Math.max(0, Math.min(100, num(x.c))), f = Math.max(0, Math.min(100, num(x.f)));
+  const sum = p + c + f; if (sum > 100) { p *= 100 / sum; c *= 100 / sum; f *= 100 / sum; }
+  let kcal = Math.max(0, num(x.kcal));
+  const m = 4 * p + 4 * c + 9 * f;
+  if (m > 0 && (!kcal || Math.abs(kcal - m) / m > 0.2)) kcal = m;
+  return { kcal: Math.min(kcal, 900), p: r1(p), c: r1(c), f: r1(f) };
+}
+function dbFor(name, en) {
+  const t = toks(name); const b = t.length ? scoreFoods(t) : null;
+  if (b && b.cover === 1 && b.spec >= 0.5) return b.f;
+  const te = toks(en || ''); const be = te.length ? scoreFoods(te) : null;
+  return be && be.cover === 1 && be.spec >= 0.67 ? be.f : null;
+}
+function aiErrorText(e) {
+  const c = e && e.code;
+  if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled') return 'AI funkcije nisu dozvoljene za ovu stranicu. Koristi pretragu ili ručni unos.';
+  if (c === 'rate_limited') return 'Previše AI zahteva zaredom. Sačekaj minut pa probaj ponovo.';
+  if (c === 'image_rejected') return 'Ova slika ne može da se pročita. Probaj drugu fotografiju (JPG ili PNG).';
+  if (c === 'images_unavailable') return 'Slanje slika ovde nije dostupno. Opiši obrok rečima.';
+  if (c === 'invalid_json' || c === 'empty_completion') return 'AI nije vratio jasan odgovor. Probaj ponovo ili opiši preciznije.';
+  if (c === 'refused') return 'AI nije mogao da obradi ovaj unos. Probaj drugačije.';
+  return 'AI trenutno ne odgovara. Probaj ponovo za trenutak.';
+}
+const aiReady = () => !!sampler;
+function cleanAiItems(list) {
+  return (Array.isArray(list) ? list : (list && Array.isArray(list.items) ? list.items : [])).filter(x => x && x.name && isFinite(+x.kcal)).slice(0, 12).map(x => {
+    const name = String(x.name).slice(0, 80), en = String(x.en || '').slice(0, 80), grams = Math.min(1000, Math.max(1, r0(num(x.grams) || 100)));
+    const db = dbFor(name, en);
+    if (db) return Object.assign(cleanFood(db), { grams, src: 'quick' });
+    return { name, en, brand: '', grams, per100: sanePer100(x), serving: null, src: 'ai', em: '✨' };
+  });
+}
+async function searchClaude(q) {
+  const list = await sampler.json(
+    'Ti si nutricionista. Korisnik traži namirnicu ili jelo: "' + q.slice(0, 120) + '".\n' +
+    'Vrati SAMO JSON niz od najviše 6 najverovatnijih poklapanja, svako: {"name": naziv na srpskom (latinica), "en": naziv na engleskom, "brand": proizvođač ili "", "kcal": kcal na 100 g, "p", "c", "f": grami na 100 g, "serving_label": uobičajena porcija npr. "1 kom" ili "", "serving_g": grama u porciji ili 0}.',
+    { modelTier: 'quick' });
+  return (Array.isArray(list) ? list : []).filter(x => x && x.name && isFinite(+x.kcal)).slice(0, 6).map(x => ({
+    name: String(x.name).slice(0, 80), en: String(x.en || '').slice(0, 80), brand: String(x.brand || '').slice(0, 40),
+    per100: sanePer100(x),
+    serving: num(x.serving_g) > 0 ? { label: String(x.serving_label || 'porcija').slice(0, 20), g: num(x.serving_g) } : null, src: 'claude', em: '✨'
+  }));
+}
+
+/* ---------- render: today ---------- */
+function countTo(el, to) {
+  const from = num(String(el.dataset.v || 0)), t0 = performance.now(), dur = 600;
+  el.dataset.v = to;
+  if (from === to || matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = fmt(to); return; }
+  const step = t => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const C52 = 2 * Math.PI * 52;
+function ringSvg(pct, color, size = 34, stroke = 4) {
+  const r = (size - stroke) / 2, C = 2 * Math.PI * r;
+  return `<svg viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${stroke}"/>${pct > 0 ? `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - Math.min(pct, 1))}"/>` : ''}</svg>`;
+}
+function renderStrip() {
+  const keys = Array.from({ length: 7 }, (_, i) => addDays(cur, i - 3));
+  $('#strip').innerHTML = keys.map(k => {
+    const d = dateOf(k), kc = totals(peek(k).items).kcal, b = budget(k);
+    const col = kc > b * 1.05 ? 'var(--over)' : 'var(--accent)';
+    return `<button class="sd ${k === cur ? 'on' : ''} ${k === today() ? 'today' : ''}" data-k="${k}" aria-label="${WDL[d.getDay()]} ${d.getDate()}."><small>${WD[d.getDay()]}</small><span class="dr">${ringSvg(kc / b, col)}<b>${d.getDate()}</b></span></button>`;
+  }).join('');
+}
+function renderToday() {
+  renderStrip();
+  const D = peek(cur), t = totals(D.items), ex = exKcal(cur), b = budget(cur), mg = macroGoals();
+  const rem = b - t.kcal;
+  $('#ringProg').style.strokeDashoffset = C52 * (1 - Math.min(t.kcal / b, 1));
+  $('#ringProg').setAttribute('stroke', rem < 0 ? 'var(--over)' : 'url(#rg)');
+  $('#ring').classList.toggle('over', rem < 0);
+  countTo($('#remain'), Math.abs(rem));
+  $('#remainLbl').textContent = rem < 0 ? 'kcal preko' : 'kcal preostalo';
+  $('#eGoal').textContent = fmt(S.settings.goal);
+  $('#eFood').textContent = '− ' + fmt(t.kcal);
+  $('#eEx').textContent = '+ ' + fmt(S.settings.exAdds ? ex : 0);
+  $('#eRem').textContent = fmt(rem);
+  const mac = (name, col, v, g) => `<div class="mac">${ringSvg(v / g, col, 40, 5)}<div><b>${r0(v)}<span style="color:var(--muted);font-weight:500"> / ${r0(g)}g</span></b><small>${name}</small></div></div>`;
+  $('#macros').innerHTML = mac('Proteini', 'var(--p)', t.p, mg.p) + mac('Ugljeni h.', 'var(--c)', t.c, mg.c) + mac('Masti', 'var(--f)', t.f, mg.f);
+
+  const y = peek(addDays(cur, -1)).items;
+  $('#meals').innerHTML = MEALS.map(m => {
+    const its = D.items.map((it, i) => ({ it, i })).filter(x => x.it.meal === m.id);
+    const mt = totals(its.map(x => x.it));
+    const canCopy = !its.length && y.some(it => it.meal === m.id);
+    return `<div class="card">
+      <div class="card-title"><h3><span class="em ${m.id}">${m.em}</span>${m.name}</h3><div class="meta">${r0(mt.kcal)} kcal${its.length ? ` · P ${r0(mt.p)}g` : ''}</div></div>
+      ${its.length ? `<ul class="items">${its.map(({ it, i }) => { const n = nutr(it); return `<li class="item" data-i="${i}"><div class="nm"><b>${esc(dn(it))}</b><small>${esc(it.brand ? it.brand + ' · ' : '')}${qtyText(it)} · P ${r0(n.p)} · UH ${r0(n.c)} · M ${r0(n.f)}</small></div><div class="kc">${r0(n.kcal)}</div></li>`; }).join('')}</ul>` : `<div class="empty-note">Još ništa nije dodato.</div>`}
+      <div class="meal-actions"><button class="add-btn" data-meal="${m.id}">+ Dodaj</button>${canCopy ? `<button class="copy-btn" data-copy="${m.id}">↺ Kao juče</button>` : ''}</div>
+    </div>`;
+  }).join('');
+
+  // water
+  const wg = S.settings.waterGoal, w = D.water;
+  $('#waterCard').innerHTML = `<div class="card-title"><h3><span class="em">💧</span>Voda</h3><div class="meta">${w} / ${wg} čaša · ${r1(w * S.settings.glassMl / 1000)} l</div></div>
+    <div class="glasses">${Array.from({ length: Math.max(wg, w) }, (_, i) => `<button class="glass ${i < w ? 'full' : ''}" data-g="${i}" aria-label="Čaša ${i + 1}"><i></i></button>`).join('')}</div>`;
+
+  // exercise
+  $('#exCard').innerHTML = `<div class="card-title"><h3><span class="em">🔥</span>Vežbe</h3><div class="meta">${r0(ex)} kcal</div></div>
+    ${D.ex.length ? `<ul class="items">${D.ex.map((e, i) => `<li class="item" data-ex="${i}"><div class="nm"><b>${esc(S.settings.lang === 'en' && e.en ? e.en : e.name)}</b><small>${e.min ? e.min + ' min' : 'ručni unos'}</small></div><div class="kc">−${r0(e.kcal)}</div></li>`).join('')}</ul>` : `<div class="empty-note">Trening, šetnja, bicikl… sve se računa.</div>`}
+    <div class="meal-actions"><button class="add-btn" id="addEx">+ Dodaj vežbu</button></div>`;
+
+  renderFast();
+  renderStreak();
+}
+function qtyText(it) {
+  if (it.unit === 'serving' && it.serving) return `${r1(it.grams / it.serving.g)} × ${esc(it.serving.label)} (${r0(it.grams)} g)`;
+  return `${r0(it.grams)} g`;
+}
+function renderFast() {
+  const f = S.fast, hrs = S.settings.fastHours;
+  if (f.start) {
+    const el = (Date.now() - f.start) / 36e5, pct = Math.min(el / hrs, 1);
+    const hh = Math.floor(el), mm = Math.floor((el - hh) * 60);
+    const end = new Date(f.start + hrs * 36e5);
+    $('#fastCard').innerHTML = `<div class="card-title"><h3><span class="em">⏳</span>Post ${hrs}:${24 - hrs}</h3><div class="meta">${pct >= 1 ? '<span class="badge">Cilj postignut</span>' : `do ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`}</div></div>
+      <div class="row" style="justify-content:space-between"><div class="fast-time">${hh}h ${String(mm).padStart(2, '0')}m</div><button class="btn ghost" id="fastStop">Završi post</button></div>
+      <div class="bar" style="margin-top:10px"><i style="width:${pct * 100}%;background:var(--fast)"></i></div>`;
+  } else {
+    const last = f.log && f.log[f.log.length - 1];
+    $('#fastCard').innerHTML = `<div class="card-title"><h3><span class="em">⏳</span>Isprekidani post</h3><div class="meta">${last ? `poslednji: ${r1(last.h)} h` : 'opciono'}</div></div>
+      <div class="chips" id="fastChips" style="margin-bottom:10px">${[12, 14, 16, 18, 20].map(h => `<button class="chip ${h === hrs ? 'on' : ''}" data-h="${h}">${h}:${24 - h}</button>`).join('')}</div>
+      <button class="btn ghost block" id="fastStart">Započni post sada</button>`;
+  }
+}
+function streakCount() {
+  let n = 0, k = today();
+  if (!peek(k).items.length) k = addDays(k, -1);
+  while (peek(k).items.length) { n++; k = addDays(k, -1); }
+  return n;
+}
+function bestStreak() {
+  const ks = Object.keys(S.days).filter(k => S.days[k].items.length).sort();
+  let best = 0, run = 0, prev = null;
+  for (const k of ks) { run = prev && addDays(prev, 1) === k ? run + 1 : 1; if (run > best) best = run; prev = k; }
+  return best;
+}
+const MILESTONES = [3, 7, 14, 30, 60, 100, 200, 365];
+function renderStreak() {
+  const n = streakCount();
+  $('#streak').textContent = `🔥 ${n}`; $('#streak').title = `${n} uzastopnih dana sa unosom`;
+  const m = MILESTONES.includes(n) && peek(today()).items.length ? n + '@' + today() : '';
+  if (m && S.settings.lastMilestone !== m) { S.settings.lastMilestone = m; save(); toast(`🔥 ${n} dana zaredom! Bravo`); }
+}
+function openStreak() {
+  const n = streakCount(), best = Math.max(bestStreak(), n);
+  const dots = Array.from({ length: 14 }, (_, i) => { const k = addDays(today(), i - 13); const on = peek(k).items.length;
+    return `<i style="display:inline-block;width:18px;height:18px;border-radius:50%;margin:3px;background:${on ? 'var(--accent)' : 'var(--line)'}" title="${k}"></i>`; }).join('');
+  const next = MILESTONES.find(x => x > n);
+  openSheet(`<h3>🔥 Serija dana</h3><div class="sub">Dani zaredom u kojima si uneo bar jedan obrok.</div>
+    <div class="grid2"><div class="msg" style="padding:10px"><b style="font-size:28px">${n}</b><br>trenutna</div><div class="msg" style="padding:10px"><b style="font-size:28px">${best}</b><br>najduža</div></div>
+    <div style="text-align:center;margin:10px 0">${dots}</div>
+    <div class="msg" style="padding:8px">${next ? `Još ${next - n} ${next - n === 1 ? 'dan' : 'dana'} do ${next}. dana zaredom.` : 'Neverovatno, držiš seriju!'}</div>
+    <button class="btn ghost block" id="stClose">Zatvori</button>`);
+  $('#stClose').onclick = closeSheet;
+}
+
+/* ---------- render: progress ---------- */
+function emaTrend(keys) {
+  // exponentially smoothed weight, interpolating missing days (MacroFactor-style trend)
+  const out = {}; let t = null, last = null;
+  if (!keys.length) return out;
+  for (let k = keys[0]; k <= keys[keys.length - 1]; k = addDays(k, 1)) {
+    const w = S.weights[k];
+    if (w != null) last = w;
+    if (last == null) continue;
+    t = t == null ? last : t + 0.1 * (last - t);
+    out[k] = t;
+  }
+  return out;
+}
+function adaptive() {
+  // Expenditure = average intake − (trend change × 7700 kcal/kg) / days, over the last 28 days.
+  const end = today(), start = addDays(end, -27);
+  const logged = []; for (let k = start; k <= end; k = addDays(k, 1)) { const kc = totals(peek(k).items).kcal; if (kc > 400) logged.push(kc); }
+  const wk = Object.keys(S.weights).sort();
+  if (logged.length < 10 || wk.length < 3) return { ready: false, logged: logged.length, weighs: wk.filter(k => k >= start).length };
+  const trend = emaTrend(wk);
+  const tk = Object.keys(trend).filter(k => k >= start).sort();
+  if (tk.length < 7) return { ready: false, logged: logged.length, weighs: wk.filter(k => k >= start).length };
+  const days = dayDiff(tk[0], tk[tk.length - 1]) || 1;
+  const dW = trend[tk[tk.length - 1]] - trend[tk[0]];
+  const intake = logged.reduce((s, v) => s + v, 0) / logged.length;
+  const tdee = intake - dW * 7700 / days;
+  return { ready: true, tdee, intake, weekly: dW / days * 7, logged: logged.length };
+}
+function renderProgress() {
+  // weight
+  const wk = Object.keys(S.weights).sort(), trend = emaTrend(wk);
+  const lastK = wk[wk.length - 1], tw = lastK ? trend[lastK] : null;
+  const from = addDays(today(), -29);
+  const pts = Object.keys(trend).filter(k => k >= from).sort();
+  let chart = `<div class="msg" style="padding:12px">Upiši težinu nekoliko dana zaredom (najbolje ujutru) i ovde se pojavljuje tvoj trend.</div>`;
+  if (pts.length >= 2) {
+    const vals = pts.map(k => trend[k]).concat(pts.map(k => S.weights[k]).filter(v => v != null));
+    let lo = Math.min(...vals), hi = Math.max(...vals); if (hi - lo < 1) { lo -= 0.5; hi += 0.5; }
+    const W = 320, H = 140, L = 30, T = 10, B = 20, x = k => L + (W - L - 4) * dayDiff(pts[0], k) / Math.max(1, dayDiff(pts[0], pts[pts.length - 1])), y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    const line = pts.map((k, i) => `${i ? 'L' : 'M'}${x(k).toFixed(1)},${y(trend[k]).toFixed(1)}`).join(' ');
+    const area = line + ` L${x(pts[pts.length - 1]).toFixed(1)},${H - B} L${x(pts[0]).toFixed(1)},${H - B} Z`;
+    const dots = pts.filter(k => S.weights[k] != null).map(k => `<circle cx="${x(k).toFixed(1)}" cy="${y(S.weights[k]).toFixed(1)}" r="2.6" fill="var(--muted)" opacity=".55"/>`).join('');
+    const ticks = [lo, (lo + hi) / 2, hi].map(v => `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${r1(v)}</text>`).join('');
+    const a = dateOf(pts[0]), b = dateOf(pts[pts.length - 1]);
+    chart = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend težine">
+      <defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+      ${ticks}<path d="${area}" fill="url(#wg)"/>${dots}<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${x(pts[pts.length - 1])}" cy="${y(trend[pts[pts.length - 1]])}" r="4.5" fill="var(--accent)" stroke="var(--card-solid)" stroke-width="2"/>
+      <text x="${L}" y="${H - 4}">${a.getDate()}. ${MONTHS[a.getMonth()]}</text><text x="${W}" y="${H - 4}" text-anchor="end">${b.getDate()}. ${MONTHS[b.getMonth()]}</text></svg>`;
+  }
+  const wk7 = pts.length ? trend[pts[pts.length - 1]] - (trend[addDays(pts[pts.length - 1], -7)] ?? trend[pts[0]]) : 0;
+  $('#weightCard').innerHTML = `<div class="card-title"><h3><span class="em">⚖️</span>Težina</h3><div class="meta">${S.weights[today()] != null ? 'danas: ' + r1(S.weights[today()]) + ' kg' : 'danas nije upisana'}</div></div>
+    <div class="row" style="justify-content:space-between;margin-bottom:10px"><div><div class="big-num">${tw != null ? r1(tw) : '–'}<span style="font-size:15px;color:var(--muted)"> kg trend</span></div>
+    <div class="hint" style="margin:4px 0 0">${pts.length >= 7 ? `${wk7 <= 0 ? '↓' : '↑'} ${r1(Math.abs(wk7))} kg za 7 dana` : 'Trend uklanja dnevne oscilacije (voda, so).'}</div></div>
+    <button class="btn grad" id="logWeight">+ Upiši</button></div>${chart}`;
+
+  // adaptive expenditure
+  const ad = adaptive();
+  $('#tdeeCard').innerHTML = ad.ready
+    ? `<div class="card-title"><h3><span class="em">🧠</span>Tvoja stvarna potrošnja</h3><span class="badge">pametni cilj</span></div>
+       <div class="row" style="justify-content:space-between"><div><div class="big-num">${fmt(ad.tdee)}</div><div class="hint" style="margin:4px 0 0">kcal dnevno, izračunato iz tvog unosa i trenda težine</div></div></div>
+       <div class="kpis"><div class="kpi"><b>${fmt(ad.intake)}</b><small>prosečan unos</small></div><div class="kpi"><b>${ad.weekly > 0 ? '+' : ''}${r1(ad.weekly)}</b><small>kg nedeljno</small></div><div class="kpi"><b>${fmt(smartGoal(ad.tdee))}</b><small>predlog cilja</small></div></div>
+       <button class="btn ghost block" style="margin-top:12px" id="applyAdaptive">Postavi ${fmt(smartGoal(ad.tdee))} kcal kao cilj</button>`
+    : `<div class="card-title"><h3><span class="em">🧠</span>Pametni cilj</h3><span class="badge">uči o tebi</span></div>
+       <p class="hint" style="margin:0 0 10px">Formule su samo početna procena. Kada imaš bar 10 dana unosa hrane i 3 merenja težine u poslednje 4 nedelje, Bite izračuna koliko stvarno trošiš i predloži tačniji cilj.</p>
+       <div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi"><b>${Math.min(ad.logged, 10)}/10</b><small>dana unosa</small></div><div class="kpi"><b>${Math.min(ad.weighs, 3)}/3</b><small>merenja</small></div></div>`;
+
+  renderWeek();
+  renderCoach();
+  const all = Object.keys(S.days).filter(k => S.days[k].items.length).sort().reverse();
+  $('#dayList').innerHTML = all.length ? all.map(k => {
+    const t = totals(S.days[k].items), d = dateOf(k), b = budget(k), over = t.kcal > b * 1.05;
+    return `<div class="item" data-k="${k}"><div style="width:46px;text-align:center;flex:none"><b style="display:block;font-size:18px;font-weight:800;line-height:1">${d.getDate()}</b><small style="color:var(--muted);font-size:11px;text-transform:uppercase">${MONTHS[d.getMonth()]}</small></div>
+      <div class="nm"><b>${WDL[d.getDay()]}</b><div class="bar" style="margin-top:6px"><i style="width:${Math.min(100, t.kcal / b * 100)}%;background:${over ? 'var(--over)' : 'linear-gradient(90deg,var(--kcal-a),var(--kcal-b))'}"></i></div></div>
+      <div class="kc">${fmt(t.kcal)} <small style="color:var(--muted);font-weight:500">kcal</small></div></div>`;
+  }).join('') : `<div class="msg">Kada dodaš hranu, dani će se pojaviti ovde.</div>`;
+}
+function renderWeek() {
+  const goal = S.settings.goal;
+  const keys = Array.from({ length: 7 }, (_, i) => addDays(weekEnd, i - 6));
+  const vals = keys.map(k => totals(peek(k).items).kcal);
+  const max = Math.max(goal * 1.25, ...vals) || 1;
+  const W = 330, PW = 284, H = 170, top = 18, bot = 22, bw = 28, gap = (PW - bw * 7) / 6;
+  const y = v => top + (H - top - bot) * (1 - v / max), gy = y(goal);
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Kalorije po danima">
+    <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--kcal-a)"/><stop offset="1" stop-color="var(--kcal-b)"/></linearGradient></defs>
+    <line x1="0" x2="${W}" y1="${gy}" y2="${gy}" stroke="var(--muted)" stroke-dasharray="4 4" opacity=".6"/>
+    <text x="${W}" y="${gy - 4}" text-anchor="end">cilj</text><text x="${W}" y="${gy + 12}" text-anchor="end">${r0(goal)}</text>`;
+  keys.forEach((k, i) => {
+    const x = i * (bw + gap), v = vals[i], h = Math.max(v > 0 ? 4 : 0, H - bot - y(v));
+    svg += `<rect x="${x}" y="${top}" width="${bw}" height="${H - top - bot}" rx="9" fill="var(--line)" opacity=".7"/>`;
+    if (v > 0) svg += `<rect x="${x}" y="${H - bot - h}" width="${bw}" height="${h}" rx="9" fill="${v > budget(k) * 1.05 ? 'var(--over)' : 'url(#bg)'}"><title>${r0(v)} kcal</title></rect>`;
+    if (v > 0 && h > 22) svg += `<text x="${x + bw / 2}" y="${H - bot - h + 14}" text-anchor="middle" style="fill:#fff;font-size:10px">${v >= 1000 ? r1(v / 1000) + 'k' : r0(v)}</text>`;
+    svg += `<text x="${x + bw / 2}" y="${H - 5}" text-anchor="middle" style="${k === today() ? 'fill:var(--text)' : ''}">${WD[dateOf(k).getDay()]}</text>`;
+  });
+  $('#chart').innerHTML = svg + '</svg>';
+  const a = dateOf(keys[0]), b = dateOf(keys[6]);
+  $('#wLabel').textContent = `${a.getDate()}. ${MONTHS[a.getMonth()]} – ${b.getDate()}. ${MONTHS[b.getMonth()]}`;
+  $('#wNext').style.opacity = weekEnd >= today() ? .35 : 1;
+  const idx = vals.map((v, i) => i).filter(i => vals[i] > 0);
+  const avg = idx.length ? idx.reduce((s, i) => s + vals[i], 0) / idx.length : 0;
+  const pAvg = idx.length ? idx.reduce((s, i) => s + totals(peek(keys[i]).items).p, 0) / idx.length : 0;
+  $('#kpis').innerHTML = `<div class="kpi"><b>${fmt(avg)}</b><small>prosek kcal</small></div><div class="kpi"><b>${r0(pAvg)}g</b><small>prosek proteina</small></div><div class="kpi"><b>${idx.length}/7</b><small>dana uneto</small></div>`;
+}
+let coachText = '';
+function renderCoach() {
+  $('#coachCard').hidden = !IN_CLAUDE;
+  const ok = aiReady();
+  $('#coachCard').innerHTML = `<div class="card-title"><h3><span class="em">✨</span>AI trener</h3><span class="badge">nedeljni pregled</span></div>
+    ${coachText ? `<div class="coach" id="coachOut">${esc(coachText)}</div>` : `<p class="hint" style="margin:0 0 10px">${ok ? 'Claude pregleda tvojih poslednjih 7 dana i da ti konkretne savete: šta ide dobro, gde fali proteina, kako da lakše ostaneš u cilju.' : 'AI trener radi kada Bite otvoriš preko claude.ai linka.'}</p>`}
+    ${ok ? `<button class="btn ${coachText ? 'ghost' : 'grad'} block" id="coachBtn" style="margin-top:10px">${coachText ? 'Analiziraj ponovo' : 'Analiziraj moju nedelju'}</button>` : ''}`;
+}
+
+/* ---------- render: profile ---------- */
+function renderProfile() {
+  const s = S.settings, p = s.profile;
+  $('#pSex').value = p.sex; $('#pAge').value = p.age; $('#pH').value = p.h; $('#pW').value = p.w; $('#pAct').value = String(p.act); $('#pPace').value = String(p.pace);
+  $('#goal').value = s.goal; $('#pPct').value = s.pPct; $('#cPct').value = s.cPct; $('#fPct').value = s.fPct; $('#waterGoal').value = s.waterGoal; $('#exToggle').value = s.exAdds ? '1' : '0';
+  $('#usdaKey').value = s.usdaKey;
+  document.querySelectorAll('#langChips .chip').forEach(c => c.classList.toggle('on', c.dataset.l === s.lang));
+  document.querySelectorAll('#themeChips .chip').forEach(c => c.classList.toggle('on', c.dataset.t === s.theme));
+  macroHint(); calcPreview();
+}
+function readProfile() { return { sex: $('#pSex').value, age: num($('#pAge').value), h: num($('#pH').value), w: num($('#pW').value), act: num($('#pAct').value), pace: num($('#pPace').value) }; }
+function calcPreview() {
+  const p = readProfile();
+  if (!(p.age && p.h && p.w)) { $('#calcOut').textContent = 'Popuni podatke iznad.'; return; }
+  const { bmr, tdee } = bmrTdee(p), g = calcGoal(p);
+  const weeks = p.pace ? '' : '';
+  $('#calcOut').innerHTML = `Bazalni metabolizam ${fmt(bmr)} · potrošnja ${fmt(tdee)} kcal<br>Preporuka: <b style="color:var(--text);font-size:20px">${fmt(g)} kcal</b> dnevno${weeks}`;
+}
+function macroHint() {
+  const sum = num($('#pPct').value) + num($('#cPct').value) + num($('#fPct').value);
+  const g = num($('#goal').value) || S.settings.goal;
+  $('#macroHint').textContent = sum !== 100 ? `Zbir je ${sum}%, treba da bude 100%.` :
+    `Proteini ${r0(g * num($('#pPct').value) / 400)} g · Ugljeni hidrati ${r0(g * num($('#cPct').value) / 400)} g · Masti ${r0(g * num($('#fPct').value) / 900)} g`;
+}
+function applyTheme() {
+  if (IN_CLAUDE) return; // the claude.ai viewer sets the theme itself
+  const t = S.settings.theme;
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = t;
+}
+
+/* ---------- views ---------- */
+let view = 'today';
+function show(v) {
+  view = v;
+  document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
+  document.querySelectorAll('#tabs button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  rerender();
+  window.scrollTo({ top: 0 });
+}
+function rerender() { renderStreak(); if (view === 'today') renderToday(); else if (view === 'progress') renderProgress(); else renderProfile(); }
+
+/* ---------- sheet ---------- */
+let stopScan = null;
+function openSheet(html) { $('#sheetBody').innerHTML = html; $('#scrim').classList.add('on'); $('#sheet').classList.add('on'); $('#sheet').scrollTop = 0; }
+function closeSheet() { if (stopScan) stopScan(); if (aiCtl) aiCtl.abort(); $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); }
+$('#scrim').onclick = closeSheet;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+function askConfirm(text, okLabel) {
+  return new Promise(res => {
+    openSheet(`<h3>${esc(text)}</h3><div class="sub">Ovo ne može da se vrati.</div>
+      <div class="row-btns"><button class="btn ghost" id="cNo">Otkaži</button><button class="btn danger" id="cYes">${esc(okLabel)}</button></div>`);
+    $('#cNo').onclick = () => { closeSheet(); res(false); };
+    $('#cYes').onclick = () => { closeSheet(); res(true); };
+  });
+}
+function mealChips(sel) { return `<div class="chips" id="mealChips">${MEALS.map(m => `<button class="chip ${m.id === sel ? 'on' : ''}" data-meal="${m.id}">${m.em} ${m.name}</button>`).join('')}</div>`; }
+function bindMealChips(cb) {
+  $('#mealChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; document.querySelectorAll('#mealChips .chip').forEach(c => c.classList.toggle('on', c === b)); cb(b.dataset.meal); };
+}
+
+/* "+" menu */
+function openActions() {
+  const d = label(cur);
+  openSheet(`<h3>Šta dodaješ?</h3><div class="sub">${esc(d.lbl)}, ${esc(d.sub)}</div>
+    <div class="action-grid">
+      ${IN_CLAUDE ? '<button data-a="photo"><span>📸</span><b>Slikaj obrok</b><small>AI prepozna hranu i grame</small></button>' : ''}
+      <button data-a="text" ${IN_CLAUDE ? '' : 'style="grid-column:1/-1"'}><span>💬</span><b>Opiši rečima</b><small>„ćevapi, lepinja, kajmak“</small></button>
+      <button data-a="search"><span>🔎</span><b>Pretraži hranu</b><small>193 namirnice + online</small></button>
+      <button data-a="quick"><span>⚡</span><b>Brzi unos</b><small>samo kalorije</small></button>
+      <button data-a="water"><span>💧</span><b>Čaša vode</b><small>+${S.settings.glassMl} ml</small></button>
+      <button data-a="ex"><span>🔥</span><b>Vežba</b><small>dodaj potrošene kcal</small></button>
+      <button data-a="weight"><span>⚖️</span><b>Težina</b><small>jutarnje merenje</small></button>
+      <button data-a="copy"><span>↺</span><b>Kopiraj juče</b><small>ceo jučerašnji dan</small></button>
+    </div>`);
+  $('#sheetBody .action-grid').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const a = b.dataset.a;
+    if (a === 'photo') startPhoto(); else if (a === 'text') openTextAI(); else if (a === 'search') openAdd(); else if (a === 'quick') { addTab = 'manual'; openAdd(); }
+    else if (a === 'water') { closeSheet(); addWater(1); } else if (a === 'ex') openExercise(); else if (a === 'weight') openWeight(); else if (a === 'copy') { closeSheet(); copyDay(); }
+  };
+}
+
+/* search / add sheet */
+let addMeal = 'breakfast', addTab = 'search', addCat = 'all', lastQuery = '', lastResults = null, resultsCache = [];
+function openAdd(meal) {
+  addMeal = meal || guessMeal();
+  const hasScan = !IN_CLAUDE && 'BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+  openSheet(`<h3>Dodaj hranu</h3><div class="sub">${esc(label(cur).lbl)}, ${esc(label(cur).sub)}</div>
+    ${mealChips(addMeal)}
+    <div class="chips" id="addTabs" style="margin-bottom:10px">
+      <button class="chip ${addTab === 'search' ? 'on' : ''}" data-t="search">🔎 Pretraga</button>
+      <button class="chip ${addTab === 'manual' ? 'on' : ''}" data-t="manual">⚡ Ručni unos</button>
+    </div><div id="addPane"></div>`);
+  bindMealChips(m => addMeal = m);
+  $('#addTabs').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; addTab = b.dataset.t; document.querySelectorAll('#addTabs .chip').forEach(c => c.classList.toggle('on', c === b)); renderAddPane(hasScan); };
+  renderAddPane(hasScan);
+  addTab = 'search';
+}
+function renderAddPane(hasScan) {
+  if ($('#addTabs .chip.on').dataset.t === 'manual') return renderManual();
+  $('#addPane').innerHTML = `<form class="search" id="sForm">
+      <input id="q" type="search" enterkeyhint="search" placeholder="Hrana, jelo ili barkod…" value="${esc(lastQuery)}" autocomplete="off" aria-label="Pretraga hrane">
+      ${hasScan ? `<button type="button" class="btn ghost" id="scanBtn" aria-label="Skeniraj barkod">▦</button>` : ''}
+      <button class="btn grad" type="submit">Traži</button>
+    </form>
+    ${S.settings.usdaKey && !IN_CLAUDE ? `<div class="chips" id="srcChips" style="margin-bottom:4px"><button type="button" class="chip on" data-s="off">Open Food Facts</button><button type="button" class="chip" data-s="usda">USDA</button></div>` : ''}
+    <div id="results"></div>`;
+  const q = $('#q');
+  q.oninput = () => { lastQuery = q.value; lastResults = null; renderLocal(); };
+  $('#sForm').onsubmit = e => { e.preventDefault(); q.blur(); doSearch(); };
+  if ($('#srcChips')) $('#srcChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; document.querySelectorAll('#srcChips .chip').forEach(c => c.classList.toggle('on', c === b)); if (q.value.trim()) doSearch(); };
+  if ($('#scanBtn')) $('#scanBtn').onclick = startScan;
+  if (lastResults) showResults(lastResults.list, lastResults.src); else renderLocal();
+}
+function localMatches(q) {
+  const words = norm(q.trim()).split(/\s+/).filter(Boolean);
+  const f = list => words.length ? list.filter(x => { const h = norm(x.name + ' ' + (x.en || '') + ' ' + (x.brand || '')); return words.every(w => h.includes(w)); }) : list;
+  const quick = words.length ? f(QUICK) : QUICK.filter(x => addCat === 'all' || x.cat === addCat);
+  return { recent: f(S.recents).slice(0, words.length ? 10 : 6), custom: f(S.custom), quick };
+}
+function resRow(food, idx) {
+  const icon = food.img && !IN_CLAUDE ? `<img src="${esc(food.img)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="ph">${food.em || (food.src === 'custom' ? '✍️' : '🍽️')}</span>`;
+  const sv = food.serving ? ` · ${esc(food.serving.label)} = ${r0(food.serving.g)} g` : '';
+  const sub = food.brand || alt(food);
+  return `<div class="res" data-r="${idx}">${icon}<div class="nm"><b>${esc(dn(food))}</b><small>${esc(sub)}${sub ? ' · ' : ''}P ${r1(food.per100.p)} · UH ${r1(food.per100.c)} · M ${r1(food.per100.f)}${sv}</small></div><div class="kc">${r0(food.per100.kcal)}<small>kcal/100g</small></div></div>`;
+}
+function bindResults() { $('#results').onclick = e => { const r = e.target.closest('.res'); if (r) openDetail(resultsCache[+r.dataset.r], { meal: addMeal }); }; }
+function renderLocal() {
+  const m = localMatches(lastQuery), typed = !!lastQuery.trim();
+  resultsCache = [];
+  const sec = (title, list) => { if (!list.length) return ''; const start = resultsCache.length; resultsCache.push(...list); return (title ? `<div class="list-title">${title}</div>` : '') + list.map((f, i) => resRow(f, start + i)).join(''); };
+  const catChips = typed ? '' : `<div class="list-title">Namirnice <span>${QUICK.length} u bazi</span></div><div class="chips" id="catChips" style="margin-bottom:2px"><button class="chip ${addCat === 'all' ? 'on' : ''}" data-c="all">Sve</button>${CATS.map(([id, nm, em]) => `<button class="chip ${addCat === id ? 'on' : ''}" data-c="${id}">${em} ${nm}</button>`).join('')}</div>`;
+  let html = sec('Nedavno', m.recent) + sec('Moje namirnice', m.custom) + catChips + sec(typed ? 'Iz baze' : '', m.quick);
+  if (typed) html = `<div class="msg" style="padding:10px">Nema tačno toga? Pritisni <b>Traži</b> za ${IN_CLAUDE ? 'AI procenu bilo kog jela ili proizvoda' : 'online bazu sa hiljadama proizvoda'}.</div>` + html;
+  $('#results').innerHTML = html || `<div class="msg">Ništa lokalno. Pritisni <b>Traži</b> ili dodaj ručno.</div>`;
+  bindResults();
+  if ($('#catChips')) $('#catChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; e.stopPropagation(); addCat = b.dataset.c; renderLocal(); };
+}
+async function doSearch() {
+  const q = $('#q').value.trim(); lastQuery = q; if (!q) return renderLocal();
+  const src = IN_CLAUDE ? 'claude' : $('#srcChips') ? document.querySelector('#srcChips .chip.on').dataset.s : 'off';
+  if (src === 'claude' && !aiReady()) { $('#results').innerHTML = `<div class="msg">AI pretraga nije dostupna. Izaberi iz baze ispod ili dodaj ručno.</div>`; return; }
+  if (src === 'claude' && /^\d{8,14}$/.test(q)) { $('#results').innerHTML = `<div class="msg">Pretraga po barkodu radi u verziji sa računara (fajl index.html). Ovde upiši naziv proizvoda.</div>`; return; }
+  $('#results').innerHTML = `<div class="loading"><i></i><i></i><i></i></div>${src === 'claude' ? '<div class="msg" style="padding-top:0">Claude procenjuje vrednosti…</div>' : ''}`;
+  try {
+    const list = src === 'claude' ? await searchClaude(q) : src === 'usda' ? await searchUSDA(q) : await searchOFF(q);
+    if ($('#q') && $('#q').value.trim() === q) { lastResults = { list, src }; showResults(list, src); }
+  } catch (e) {
+    if (!$('#results')) return;
+    $('#results').innerHTML = `<div class="msg">${src === 'claude' ? aiErrorText(e) : `Pretraga trenutno ne radi (${esc(e.name === 'AbortError' ? 'isteklo vreme' : e.message)}). Proveri internet ili dodaj ručno.`}</div>`;
+  }
+}
+function showResults(list, src) {
+  resultsCache = list;
+  const name = src === 'claude' ? 'procena (Claude)' : src === 'usda' ? 'USDA' : 'Open Food Facts';
+  $('#results').innerHTML = list.length
+    ? `<div class="list-title">Rezultati <span>${list.length} · ${name}</span></div>` + list.map(resRow).join('')
+    : `<div class="msg">Nema rezultata za „${esc(lastQuery)}“. Probaj drugi naziv, engleski naziv ili ručni unos.</div>`;
+  bindResults();
+}
+async function startScan() {
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); } catch (e) { toast('Kamera nije dostupna'); return; }
+  const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+  $('#results').innerHTML = `<video id="vid" playsinline muted style="width:100%;border-radius:18px;background:#000;aspect-ratio:4/3;object-fit:cover;max-width:100%"></video><p class="hint" style="text-align:center;margin-top:8px">Uperi kameru u barkod…</p><button class="btn ghost block" id="cancelScan">Otkaži</button>`;
+  const v = $('#vid'); v.srcObject = stream; await v.play().catch(() => {});
+  let alive = true;
+  stopScan = () => { alive = false; stream.getTracks().forEach(t => t.stop()); stopScan = null; };
+  $('#cancelScan').onclick = () => { stopScan(); renderLocal(); };
+  const tick = async () => {
+    if (!alive) return;
+    try { const c = await det.detect(v); if (c.length) { stopScan(); $('#q').value = c[0].rawValue; doSearch(); return; } } catch (e) {}
+    setTimeout(tick, 250);
+  };
+  tick();
+}
+function renderManual() {
+  $('#addPane').innerHTML = `<div class="field"><label for="mName">Naziv</label><input id="mName" placeholder="npr. Mamina sarma"></div>
+    <div class="grid2">
+      <div class="field"><label for="mKcal">Kalorije (kcal)</label><input id="mKcal" type="number" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label for="mG">Količina (g)</label><input id="mG" type="number" inputmode="decimal" value="100"></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label for="mP">Proteini (g)</label><input id="mP" type="number" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label for="mC">Ugljeni h. (g)</label><input id="mC" type="number" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label for="mF">Masti (g)</label><input id="mF" type="number" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <p class="hint">Upiši vrednosti za količinu koju si pojeo/la. Za brzi unos dovoljne su kalorije.</p>
+    <label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mSave" checked style="width:auto"> Sačuvaj u „Moje namirnice“</label>
+    <button class="btn grad block" id="mAdd">Dodaj</button>`;
+  $('#mAdd').onclick = () => {
+    const name = $('#mName').value.trim() || 'Brzi unos', g = num($('#mG').value) || 100, kcal = num($('#mKcal').value);
+    if (!kcal) { toast('Upiši kalorije'); $('#mKcal').focus(); return; }
+    const k = 100 / g;
+    const food = { name, brand: '', per100: { kcal: kcal * k, p: num($('#mP').value) * k, c: num($('#mC').value) * k, f: num($('#mF').value) * k }, serving: { label: 'porcija', g }, src: 'custom' };
+    if ($('#mSave').checked && name !== 'Brzi unos') S.custom = [food, ...S.custom.filter(x => x.name !== name)].slice(0, 100);
+    addItem(food, g, 'serving', addMeal);
+  };
+}
+
+/* detail / edit */
+function openDetail(food, { meal, editIndex } = {}) {
+  const editing = editIndex != null;
+  const it = editing ? peek(cur).items[editIndex] : null;
+  let unit = editing ? (it.unit || 'g') : (food.serving ? 'serving' : 'g');
+  const amount = editing ? (unit === 'serving' ? r1(it.grams / food.serving.g) : r0(it.grams)) : (unit === 'serving' ? 1 : 100);
+  let selMeal = editing ? it.meal : meal;
+  const sub = food.brand || alt(food);
+  const srcName = { off: 'Open Food Facts', usda: 'USDA', claude: 'procena (Claude)', ai: 'AI procena', quick: 'Bite baza' }[food.src] || '';
+  openSheet(`<h3>${esc(dn(food))}</h3><div class="sub">${esc(sub)}${sub ? ' · ' : ''}${r0(food.per100.kcal)} kcal na 100 g${srcName ? ' · ' + srcName : ''}</div>
+    <div class="detail-macros" id="dm"></div>
+    <div class="qty">
+      <input id="amt" type="number" inputmode="decimal" min="0" step="any" value="${amount}" aria-label="Količina">
+      <select id="unit" aria-label="Jedinica"><option value="g">grama</option>${food.serving ? `<option value="serving">× ${esc(food.serving.label)} (${r0(food.serving.g)} g)</option>` : ''}</select>
+    </div>
+    <div class="chips" id="gramChips">${(unit === 'serving' ? [0.5, 1, 1.5, 2, 3] : [50, 100, 150, 200, 300]).map(v => `<button class="chip" data-v="${v}">${v}${unit === 'serving' ? '×' : ' g'}</button>`).join('')}</div>
+    ${mealChips(selMeal)}
+    ${editing ? `<div class="row-btns"><button class="btn danger" id="del">Obriši</button><button class="btn grad" id="ok">Sačuvaj</button></div>` : `<button class="btn grad block" id="ok">Dodaj u ${esc(mealName(selMeal))}</button>`}`);
+  $('#unit').value = unit;
+  const grams = () => unit === 'serving' ? num($('#amt').value) * food.serving.g : num($('#amt').value);
+  const upd = () => {
+    const n = nutr({ grams: grams(), per100: food.per100 });
+    $('#dm').innerHTML = `<div class="dm"><b>${r0(n.kcal)}</b><small>kcal</small></div><div class="dm"><b style="color:var(--p)">${r1(n.p)}</b><small>proteini</small></div><div class="dm"><b style="color:var(--c)">${r1(n.c)}</b><small>ugljeni h.</small></div><div class="dm"><b style="color:var(--f)">${r1(n.f)}</b><small>masti</small></div>`;
+  };
+  $('#amt').oninput = upd;
+  $('#gramChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; $('#amt').value = b.dataset.v; upd(); };
+  $('#unit').onchange = () => { const g = grams(); unit = $('#unit').value; $('#amt').value = unit === 'serving' ? r1(g / food.serving.g) : r0(g); upd(); };
+  bindMealChips(m => { selMeal = m; if (!editing) $('#ok').textContent = 'Dodaj u ' + mealName(m); });
+  upd();
+  $('#ok').onclick = () => {
+    const g = grams(); if (!(g > 0)) { toast('Upiši količinu'); return; }
+    if (editing) { Object.assign(day(cur).items[editIndex], { grams: g, unit, meal: selMeal }); save(); closeSheet(); renderToday(); toast('Sačuvano'); }
+    else addItem(food, g, unit, selMeal);
+  };
+  if (editing) $('#del').onclick = () => {
+    const D = day(cur), removed = D.items.splice(editIndex, 1)[0]; save(); closeSheet(); renderToday();
+    toast('Obrisano: ' + dn(removed), { label: 'Vrati', fn: () => { D.items.splice(editIndex, 0, removed); save(); renderToday(); } });
+  };
+}
+const cleanFood = f => ({ name: f.name, en: f.en || '', brand: f.brand || '', per100: f.per100, serving: f.serving || null, src: f.src, code: f.code || '', img: f.img || '', em: f.em || '' });
+function remember(clean) { S.recents = [clean, ...S.recents.filter(r => !(r.name === clean.name && r.brand === clean.brand))].slice(0, 30); }
+function addItem(food, grams, unit, meal) {
+  const clean = cleanFood(food);
+  day(cur).items.push(Object.assign({}, clean, { grams, unit: unit === 'serving' && food.serving ? 'serving' : 'g', meal }));
+  remember(clean); save(); closeSheet(); renderToday(); buzz();
+  toast(`Dodato u ${mealName(meal)} ✓`);
+}
+function copyMeal(meal) {
+  const src = peek(addDays(cur, -1)).items.filter(it => it.meal === meal);
+  if (!src.length) return;
+  const D = day(cur), n0 = D.items.length;
+  src.forEach(it => D.items.push(JSON.parse(JSON.stringify(it))));
+  save(); renderToday(); buzz();
+  toast(`${mealName(meal)} kopiran od juče`, { label: 'Vrati', fn: () => { D.items.splice(n0, src.length); save(); renderToday(); } });
+}
+function copyDay() {
+  const src = peek(addDays(cur, -1)).items;
+  if (!src.length) { toast('Juče nema unosa za kopiranje'); return; }
+  const D = day(cur), n0 = D.items.length;
+  src.forEach(it => D.items.push(JSON.parse(JSON.stringify(it))));
+  save(); show('today');
+  toast(`Kopirano ${src.length} stavki od juče`, { label: 'Vrati', fn: () => { D.items.splice(n0, src.length); save(); renderToday(); } });
+}
+
+/* ---------- AI: photo + text logging ---------- */
+let aiCtl = null;
+function needAI() {
+  if (aiReady()) return true;
+  openSheet(`<h3>Slikanje obroka</h3><p class="sub">${IN_CLAUDE ? 'AI funkcije se još učitavaju ili nisu dozvoljene. Probaj ponovo za par sekundi.' : 'Prepoznavanje slike radi kada Bite otvoriš preko claude.ai linka. Ovde možeš da opišeš obrok rečima ili da pretražiš hranu.'}</p>
+    <div class="row-btns"><button class="btn ghost" id="goSearch">Pretraga</button><button class="btn grad" id="goText">Opiši rečima</button></div>`);
+  $('#goSearch').onclick = () => openAdd();
+  $('#goText').onclick = openTextAI;
+  return false;
+}
+function startPhoto() { if (!needAI()) return; closeSheet(); $('#photoInput').value = ''; $('#photoInput').click(); }
+$('#photoInput').onchange = e => { const f = e.target.files && e.target.files[0]; if (f) runPhoto(f); };
+function openTextAI() {
+  openSheet(`<h3>Opiši šta si jeo/la</h3><div class="sub">Piši prirodno i navedi količine kad ih znaš. Odvajaj zarezom.</div>
+    <textarea id="aiText" placeholder="npr. 2 jaja na oko, 2 kriške integralnog hleba, kafa sa mlekom"></textarea>
+    <div class="chips" style="margin-top:10px" id="aiEx"><button class="chip">10 ćevapa, pola lepinje, luk</button><button class="chip">tanjir pasulja i kriška hleba</button><button class="chip">200 g piletine, šolja pirinča, salata</button><button class="chip">jogurt i banana</button></div>
+    <button class="btn grad block" id="aiGo">Izračunaj</button>
+    <p class="hint" style="margin-top:10px">Poznatu hranu računamo iz Bite baze sa stvarnim porcijama (jaje 50 g, kriška 30 g, ćevap 23 g…). Samo ono čega nema u bazi procenjuje Claude.</p>`);
+  $('#aiEx').onclick = e => { const b = e.target.closest('.chip'); if (b) $('#aiText').value = b.textContent; };
+  $('#aiGo').onclick = () => { const t = $('#aiText').value.trim(); if (!t) { toast('Napiši šta si jeo/la'); return; } runText(t); };
+  setTimeout(() => $('#aiText') && $('#aiText').focus(), 350);
+}
+function aiLoading(title, preview) {
+  openSheet(`<h3>${title}</h3><div class="sub">Claude prepoznaje hranu i procenjuje količine.</div>
+    ${preview ? `<img class="photo-prev" src="${preview}" alt="Tvoj obrok">` : ''}<div class="loading"><i></i><i></i><i></i></div><button class="btn ghost block" id="aiStop">Otkaži</button>`);
+  $('#aiStop').onclick = closeSheet;
+}
+function aiFailed(e, back) {
+  openSheet(`<h3>Nije uspelo</h3><p class="sub">${esc(aiErrorText(e))}</p><button class="btn ghost block" id="aiBack">Nazad</button>`);
+  $('#aiBack').onclick = back;
+}
+async function runText(text) {
+  const { items, unmatched } = parseMeal(text);
+  const rows = items.map(x => Object.assign(cleanFood(x.food), { grams: x.grams, from: x.from }));
+  let missing = unmatched;
+  if (unmatched.length && aiReady()) {
+    aiLoading('Računam…');
+    aiCtl = new AbortController();
+    try {
+      const out = await sampler.json('Korisnik iz Srbije opisuje šta je pojeo. Ovo su delovi koje treba proceniti (svaki je posebna stavka): ' +
+        unmatched.map(u => '"' + u.slice(0, 120) + '"').join(', ') + '.\n' + AI_FORMAT + '\nVrati SAMO JSON niz, jedan objekat po delu.', { signal: aiCtl.signal, modelTier: 'default' });
+      aiCtl = null;
+      rows.push(...cleanAiItems(out));
+      missing = [];
+    } catch (e) {
+      aiCtl = null;
+      if (e && e.code === 'cancelled') return;
+      if (!rows.length) return aiFailed(e, openTextAI);
+    }
+  }
+  if (!rows.length) {
+    openSheet(`<h3>Nisam prepoznao hranu</h3><p class="sub">Probaj konkretnije, npr. „200 g piletine, šolja pirinča“, ili potraži namirnicu.</p>
+      <div class="row-btns"><button class="btn ghost" id="goSearch">Pretraga</button><button class="btn grad" id="aiRetry">Pokušaj ponovo</button></div>`);
+    $('#goSearch').onclick = () => { lastQuery = missing[0] || ''; openAdd(); };
+    $('#aiRetry').onclick = openTextAI; return;
+  }
+  reviewAI(rows, '', missing);
+}
+async function runPhoto(file) {
+  const preview = URL.createObjectURL(file);
+  aiLoading('Analiziram sliku…', preview);
+  aiCtl = new AbortController();
+  try {
+    const out = await sampler.json('Na slici je obrok. Prepoznaj svaku namirnicu ili jelo koje se jasno vidi i proceni količinu u gramima prema veličini tanjira (standardni tanjir ima prečnik oko 26 cm). ' +
+      AI_FORMAT + '\nVrati SAMO JSON niz. Ako na slici nema hrane, vrati [].', { signal: aiCtl.signal, modelTier: 'default', images: [file] });
+    aiCtl = null;
+    const rows = cleanAiItems(out);
+    if (!rows.length) {
+      openSheet(`<h3>Nisam prepoznao hranu</h3><p class="sub">Probaj sliku odozgo, sa više svetla, ili opiši obrok rečima.</p><button class="btn grad block" id="aiRetry">Opiši rečima</button>`);
+      $('#aiRetry').onclick = openTextAI; return;
+    }
+    reviewAI(rows, preview, []);
+  } catch (e) {
+    aiCtl = null;
+    if (e && e.code === 'cancelled') return;
+    aiFailed(e, openActions);
+  }
+}
+function reviewAI(items, preview, missing) {
+  let meal = guessMeal();
+  const step = it => it.serving ? piece(it) || it.serving.g : (it.grams >= 100 ? 25 : 10);
+  openSheet(`<h3>Proveri i dodaj</h3><div class="sub">Podesi količine strelicama ili upiši grame.</div>
+    ${preview ? `<img class="photo-prev" src="${preview}" alt="Tvoj obrok">` : ''}
+    ${mealChips(meal)}
+    <div id="aiList">${items.map((it, i) => `<div class="ai-item"><input type="checkbox" id="ai-c${i}" checked aria-label="Uključi ${esc(dn(it))}">
+      <label for="ai-c${i}"><b>${esc(dn(it))}</b><small id="ai-k${i}"></small><span class="src-tag ${it.src === 'ai' ? 'ai' : ''}">${it.src === 'ai' ? 'AI procena' : 'Bite baza'}</span></label>
+      <div class="stepper"><button type="button" data-d="-1" data-i="${i}" aria-label="Manje">−</button><input type="number" inputmode="decimal" id="ai-g${i}" value="${it.grams}" aria-label="Grama"><button type="button" data-d="1" data-i="${i}" aria-label="Više">+</button></div></div>`).join('')}</div>
+    ${missing.length ? `<p class="hint" style="margin-top:10px">Nisam prepoznao: ${missing.map(m => `„${esc(m)}“`).join(', ')}. Dodaj to preko pretrage.</p>` : ''}
+    <div class="total-row"><span>Ukupno</span><b id="aiTotal"></b></div>
+    <button class="btn grad block" id="aiAdd">Dodaj u obrok</button>`);
+  const upd = () => {
+    let tot = 0;
+    items.forEach((it, i) => {
+      const n = nutr({ grams: num($('#ai-g' + i).value), per100: it.per100 });
+      if ($('#ai-c' + i).checked) tot += n.kcal;
+      $('#ai-k' + i).textContent = `${r0(n.kcal)} kcal · P ${r0(n.p)} · UH ${r0(n.c)} · M ${r0(n.f)}`;
+    });
+    $('#aiTotal').textContent = fmt(tot) + ' kcal';
+  };
+  $('#aiList').oninput = upd; $('#aiList').onchange = upd;
+  $('#aiList').onclick = e => {
+    const b = e.target.closest('[data-d]'); if (!b) return;
+    const i = +b.dataset.i, inp = $('#ai-g' + i), s = step(items[i]);
+    inp.value = Math.max(0, r0(num(inp.value) + s * +b.dataset.d)); upd();
+  };
+  upd();
+  bindMealChips(m => meal = m);
+  $('#aiAdd').onclick = () => {
+    const D = day(cur); let n = 0;
+    items.forEach((it, i) => {
+      if (!$('#ai-c' + i).checked) return;
+      const g = num($('#ai-g' + i).value); if (!(g > 0)) return;
+      const clean = cleanFood(it); D.items.push(Object.assign({}, clean, { grams: g, unit: 'g', meal })); remember(clean); n++;
+    });
+    if (preview) URL.revokeObjectURL(preview);
+    save(); closeSheet(); renderToday(); buzz();
+    toast(`Dodato ${n} ${n === 1 ? 'stavka' : 'stavki'} u ${mealName(meal)} ✓`);
+  };
+}
+
+/* ---------- water / exercise / weight / fasting ---------- */
+function addWater(delta) {
+  const D = day(cur); D.water = Math.max(0, D.water + delta); save(); renderToday(); buzz();
+  if (delta > 0 && D.water === S.settings.waterGoal) toast('Cilj vode postignut 💧');
+}
+function openExercise() {
+  const kg = curWeight();
+  let sel = 0;
+  openSheet(`<h3>Dodaj vežbu</h3><div class="sub">Računamo po tvojoj težini (${r1(kg)} kg).</div>
+    <div class="chips" id="exChips" style="flex-wrap:wrap">${EXERCISES.map((e, i) => `<button class="chip ${i === 0 ? 'on' : ''}" data-i="${i}">${e[3]} ${esc(S.settings.lang === 'en' ? e[1] : e[0])}</button>`).join('')}</div>
+    <div class="grid2"><div class="field"><label for="exMin">Trajanje (min)</label><input id="exMin" type="number" inputmode="numeric" value="30"></div>
+    <div class="field"><label for="exK">Potrošeno (kcal)</label><input id="exK" type="number" inputmode="numeric"></div></div>
+    <p class="hint">Ako ti sat ili aplikacija pokazuje tačnije kalorije, upiši ih direktno.</p>
+    <button class="btn grad block" id="exAdd">Dodaj</button>`);
+  const calc = () => { $('#exK').value = r0(EXERCISES[sel][2] * kg * num($('#exMin').value) / 60); };
+  $('#exChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; sel = +b.dataset.i; document.querySelectorAll('#exChips .chip').forEach(c => c.classList.toggle('on', c === b)); calc(); };
+  $('#exMin').oninput = calc; calc();
+  $('#exAdd').onclick = () => {
+    const k = num($('#exK').value); if (!(k > 0)) { toast('Upiši kalorije ili trajanje'); return; }
+    day(cur).ex.push({ name: EXERCISES[sel][0], en: EXERCISES[sel][1], min: num($('#exMin').value), kcal: k });
+    save(); closeSheet(); show('today'); buzz(); toast(`+${r0(k)} kcal u budžetu 🔥`);
+  };
+}
+function openWeight() {
+  const k = view === 'today' ? cur : today();
+  const v = S.weights[k] ?? curWeight();
+  openSheet(`<h3>Težina</h3><div class="sub">${esc(label(k).lbl)}, ${esc(label(k).sub)} · najbolje ujutru, pre doručka</div>
+    <div class="row" style="justify-content:center;gap:14px;margin:8px 0 16px">
+      <button class="icon-btn" id="wMinus" aria-label="Manje" style="width:48px;height:48px;font-size:22px">−</button>
+      <input id="wVal" type="number" inputmode="decimal" step="0.1" value="${r1(v)}" style="width:130px;text-align:center;font-size:30px;font-weight:800" aria-label="Kilogrami">
+      <button class="icon-btn" id="wPlus" aria-label="Više" style="width:48px;height:48px;font-size:22px">+</button></div>
+    <div class="row-btns">${S.weights[k] != null ? '<button class="btn danger" id="wDel">Obriši</button>' : ''}<button class="btn grad" id="wSave">Sačuvaj</button></div>`);
+  $('#wMinus').onclick = () => { $('#wVal').value = r1(num($('#wVal').value) - 0.1); };
+  $('#wPlus').onclick = () => { $('#wVal').value = r1(num($('#wVal').value) + 0.1); };
+  $('#wSave').onclick = () => {
+    const w = num($('#wVal').value); if (w < 25 || w > 350) { toast('Upiši težinu u kilogramima'); return; }
+    S.weights[k] = r1(w); if (k === today()) S.settings.profile.w = r1(w);
+    save(); closeSheet(); rerender(); buzz(); toast('Težina sačuvana ⚖️');
+  };
+  if ($('#wDel')) $('#wDel').onclick = () => { delete S.weights[k]; save(); closeSheet(); rerender(); };
+}
+setInterval(() => { if (view === 'today' && S.fast.start && !document.hidden) renderFast(); }, 30000);
+
+/* ---------- AI coach ---------- */
+let coachCtl = null;
+async function runCoach() {
+  const keys = Array.from({ length: 7 }, (_, i) => addDays(today(), i - 6));
+  const mg = macroGoals();
+  const lines = keys.map(k => {
+    const D = peek(k), t = totals(D.items);
+    if (!D.items.length) return `${k}: ništa nije uneto`;
+    const foods = D.items.map(it => `${dn(it)} ${r0(it.grams)}g`).slice(0, 14).join(', ');
+    return `${k}: ${r0(t.kcal)} kcal, P ${r0(t.p)}g, UH ${r0(t.c)}g, M ${r0(t.f)}g, voda ${D.water} čaša, vežbe ${r0(exKcal(k))} kcal. Hrana: ${foods}`;
+  }).join('\n');
+  const ad = adaptive();
+  const prompt = `Ti si topao, konkretan nutricionista-trener. Odgovori na srpskom (latinica), najviše 170 reči, bez naslova i bez markdown zvezdica.
+Cilj korisnika: ${S.settings.goal} kcal, proteini ${r0(mg.p)}g, ugljeni hidrati ${r0(mg.c)}g, masti ${r0(mg.f)}g, voda ${S.settings.waterGoal} čaša. Tempo: ${S.settings.profile.pace} kg nedeljno.
+${ad.ready ? `Izračunata stvarna potrošnja: ${r0(ad.tdee)} kcal, trend ${r1(ad.weekly)} kg nedeljno.` : ''}
+Poslednjih 7 dana:
+${lines}
+
+Napiši: 1) jednu rečenicu šta ide dobro, 2) tri kratka konkretna saveta sa brojevima i primerima hrane iz srpske kuhinje (svaki u novom redu, počni sa "• "), 3) jednu ohrabrujuću rečenicu za sledeću nedelju. Ako ima malo podataka, reci da redovno unosi obroke.`;
+  const btn = $('#coachBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Claude razmišlja…'; }
+  coachCtl = new AbortController();
+  try {
+    coachText = '…';
+    renderCoach(); $('#coachBtn').disabled = true; $('#coachBtn').textContent = 'Claude razmišlja…';
+    const { text } = await sampler(prompt, { signal: coachCtl.signal, cache: false, onText: ({ text }) => { coachText = text; const o = $('#coachOut'); if (o) o.textContent = text; } });
+    coachText = text;
+  } catch (e) { coachText = e && e.code === 'cancelled' ? '' : aiErrorText(e); }
+  coachCtl = null;
+  if (view === 'progress') renderCoach();
+}
+
+/* ---------- toast ---------- */
+let tt;
+function toast(m, action) {
+  const t = $('#toast');
+  t.innerHTML = `<span>${esc(m)}</span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
+  if (action) t.querySelector('button').onclick = () => { t.classList.remove('on'); action.fn(); };
+  t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), action ? 4500 : 2200);
+}
+
+/* ---------- onboarding ---------- */
+function maybeOnboard() {
+  if (S.settings.onboarded || Object.keys(S.days).length) return;
+  openSheet(`<h3>Dobro došao/la u Bite 👋</h3><div class="sub">${SLOGAN}</div>
+    <div class="msg" style="padding:6px;text-align:left;line-height:1.7">
+      🍲 <b>Domaća jela</b> u bazi: ćevapi, burek, pita, sarma, kajmak, ajvar<br>
+      🔒 <b>Podaci ostaju na tvom telefonu</b>, nema naloga<br>
+      🔥 <b>Serija dana</b> te drži u ritmu
+    </div>
+    <button class="btn grad block" id="oNext">Dalje</button>
+    <button class="btn ghost block" id="oSkip0" style="margin-top:8px">Preskoči</button>`);
+  $('#oNext').onclick = onboardForm;
+  $('#oSkip0').onclick = () => { S.settings.onboarded = true; save(); closeSheet(); };
+}
+function onboardDone() {
+  openSheet(`<h3>Spremno! ✓</h3><div class="sub">Tvoj cilj je postavljen: ${fmt(S.settings.goal)} kcal dnevno.</div>
+    <div class="msg" style="padding:6px;text-align:left;line-height:1.7">
+      ➕ Dodaj prvi obrok dugmetom <b>+</b> dole<br>
+      📲 Instaliraj aplikaciju: u pregledaču izaberi „Dodaj na početni ekran“<br>
+      💾 Povremeno izvezi kopiju u <b>Profil → Izvezi kopiju</b>, jer su podaci samo na ovom uređaju
+    </div>
+    <button class="btn grad block" id="oFin">Kreni</button>`);
+  $('#oFin').onclick = closeSheet;
+}
+function onboardForm() {
+  const p = S.settings.profile;
+  openSheet(`<h3>Dobro došao/la u Bite 👋</h3><div class="sub">Dva pitanja i dobijaš lični dnevni cilj.</div>
+    <div class="grid2">
+      <div class="field"><label for="oSex">Pol</label><select id="oSex"><option value="m">Muški</option><option value="f">Ženski</option></select></div>
+      <div class="field"><label for="oAge">Godine</label><input id="oAge" type="number" inputmode="numeric" value="${p.age}"></div>
+      <div class="field"><label for="oH">Visina (cm)</label><input id="oH" type="number" inputmode="numeric" value="${p.h}"></div>
+      <div class="field"><label for="oW">Težina (kg)</label><input id="oW" type="number" inputmode="decimal" value="${p.w}"></div>
+    </div>
+    <div class="field"><label>Šta želiš?</label><div class="chips" id="oGoal" style="margin:0"><button class="chip" data-p="-0.5">Da smršam</button><button class="chip on" data-p="0">Da održim</button><button class="chip" data-p="0.25">Da dobijem masu</button></div></div>
+    <div class="field"><label>Koliko treniraš?</label><div class="chips" id="oAct" style="margin:0"><button class="chip" data-a="1.2">Ne treniram</button><button class="chip" data-a="1.375">1–3× nedeljno</button><button class="chip on" data-a="1.55">3–5×</button><button class="chip" data-a="1.725">Svaki dan</button></div></div>
+    <div class="msg" id="oOut" style="padding:8px"></div>
+    <button class="btn grad block" id="oGo">Počni</button>
+    <button class="btn ghost block" id="oSkip" style="margin-top:8px">Preskoči</button>`);
+  const read = () => ({ sex: $('#oSex').value, age: num($('#oAge').value), h: num($('#oH').value), w: num($('#oW').value),
+    pace: num(document.querySelector('#oGoal .chip.on').dataset.p), act: num(document.querySelector('#oAct .chip.on').dataset.a) });
+  const upd = () => { const pr = read(); $('#oOut').innerHTML = pr.age && pr.h && pr.w ? `Tvoj dnevni cilj: <b style="color:var(--text);font-size:20px">${fmt(calcGoal(pr))} kcal</b>` : ''; };
+  ['#oGoal', '#oAct'].forEach(s => $(s).onclick = e => { const b = e.target.closest('.chip'); if (!b) return; $(s).querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); upd(); });
+  ['#oSex', '#oAge', '#oH', '#oW'].forEach(s => $(s).oninput = upd); upd();
+  $('#oGo').onclick = () => {
+    const pr = read(); if (!(pr.age && pr.h && pr.w)) { toast('Popuni godine, visinu i težinu'); return; }
+    S.settings.profile = pr; S.settings.goal = calcGoal(pr); S.settings.onboarded = true; S.weights[today()] = r1(pr.w);
+    if (pr.pace < 0) Object.assign(S.settings, { pPct: 35, cPct: 35, fPct: 30 });
+    save(); rerender(); onboardDone();
+  };
+  $('#oSkip').onclick = () => { S.settings.onboarded = true; save(); closeSheet(); };
+}
+
+/* ---------- share card ---------- */
+function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+async function shareDay() {
+  const W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d'), D = peek(cur), t = totals(D.items), b = budget(cur), mg = macroGoals();
+  const F = '-apple-system, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  const bg = c.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#1d1633'); bg.addColorStop(1, '#0d0b18'); c.fillStyle = bg; c.fillRect(0, 0, W, H);
+  const gl = c.createRadialGradient(W * .8, 300, 40, W * .8, 300, 700); gl.addColorStop(0, 'rgba(139,124,246,.45)'); gl.addColorStop(1, 'rgba(139,124,246,0)'); c.fillStyle = gl; c.fillRect(0, 0, W, H);
+  c.textAlign = 'center';
+  c.fillStyle = '#fff'; c.font = `800 92px ${F}`; c.fillText('bite', W / 2, 190);
+  const dt = new Date(cur + 'T12:00:00').toLocaleDateString('sr-Latn-RS', { weekday: 'long', day: 'numeric', month: 'long' });
+  c.fillStyle = '#a79fd6'; c.font = `500 40px ${F}`; c.fillText(dt, W / 2, 262);
+  const cx = W / 2, cy = 760, R = 300, frac = b > 0 ? Math.min(t.kcal / b, 1) : 0;
+  c.lineWidth = 60; c.lineCap = 'round';
+  c.strokeStyle = '#2a2540'; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.stroke();
+  if (frac > 0) { const rg = c.createLinearGradient(cx - R, cy - R, cx + R, cy + R); rg.addColorStop(0, '#ff7ab6'); rg.addColorStop(1, '#8b7cf6');
+    c.strokeStyle = rg; c.beginPath(); c.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); c.stroke(); }
+  c.fillStyle = '#fff'; c.font = `800 150px ${F}`; c.fillText(fmt(t.kcal), cx, cy + 40);
+  c.fillStyle = '#a79fd6'; c.font = `500 46px ${F}`; c.fillText(`od ${fmt(b)} kcal`, cx, cy + 110);
+  const cols = [['Proteini', t.p, mg.p, '#6ea8ff'], ['Ugljeni h.', t.c, mg.c, '#ffc15e'], ['Masti', t.f, mg.f, '#ff7ab6']];
+  cols.forEach(([nm, v, g, col], i) => {
+    const x = 90 + i * 330, w = 270;
+    c.textAlign = 'left'; c.fillStyle = '#a79fd6'; c.font = `500 36px ${F}`; c.fillText(nm, x, 1230);
+    c.fillStyle = '#fff'; c.font = `700 52px ${F}`; c.fillText(`${r0(v)}g`, x, 1295);
+    c.fillStyle = '#2a2540'; roundRect(c, x, 1330, w, 20, 10); c.fill();
+    c.fillStyle = col; roundRect(c, x, 1330, Math.max(20, w * Math.min(g > 0 ? v / g : 0, 1)), 20, 10); c.fill();
+  });
+  c.textAlign = 'center';
+  const n = streakCount();
+  if (n > 0) { c.fillStyle = 'rgba(139,124,246,.22)'; roundRect(c, W / 2 - 300, 1470, 600, 120, 60); c.fill();
+    c.fillStyle = '#fff'; c.font = `700 54px ${F}`; c.fillText(`🔥 ${n} ${n === 1 ? 'dan' : 'dana'} zaredom`, W / 2, 1548); }
+  c.fillStyle = '#a79fd6'; c.font = `500 38px ${F}`; c.fillText(SLOGAN, W / 2, 1800);
+  const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+  if (!blob) { toast('Ne mogu da napravim sliku'); return; }
+  const file = new File([blob], `bite-${cur}.png`, { type: 'image/png' });
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Bite' }); return; } }
+  catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Slika sačuvana ✓');
+}
+
+/* ---------- events ---------- */
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'plusBtn') openActions(); else show(b.dataset.v); };
+$('#todayBtn').onclick = () => { cur = today(); weekEnd = today(); show('today'); };
+$('#strip').onclick = e => { const b = e.target.closest('.sd'); if (b) { cur = b.dataset.k; renderToday(); } };
+$('#shareBtn').onclick = shareDay;
+$('#streak').onclick = openStreak; $('#streak').style.cursor = 'pointer';
+$('#qaPhoto').onclick = startPhoto;
+$('#qaText').onclick = openTextAI;
+$('#qaSearch').onclick = () => openAdd();
+$('#meals').onclick = e => {
+  const a = e.target.closest('.add-btn'); if (a) return openAdd(a.dataset.meal);
+  const c = e.target.closest('.copy-btn'); if (c) return copyMeal(c.dataset.copy);
+  const it = e.target.closest('.item'); if (it) { const i = +it.dataset.i; openDetail(peek(cur).items[i], { editIndex: i }); }
+};
+$('#waterCard').onclick = e => { const g = e.target.closest('.glass'); if (!g) return; const i = +g.dataset.g, w = peek(cur).water; addWater(i < w ? (i + 1 === w ? -1 : i + 1 - w) : i + 1 - w); };
+$('#exCard').onclick = e => {
+  if (e.target.closest('#addEx')) return openExercise();
+  const it = e.target.closest('[data-ex]'); if (!it) return;
+  const D = day(cur), i = +it.dataset.ex, removed = D.ex.splice(i, 1)[0]; save(); renderToday();
+  toast('Vežba obrisana', { label: 'Vrati', fn: () => { D.ex.splice(i, 0, removed); save(); renderToday(); } });
+};
+$('#fastCard').onclick = e => {
+  const h = e.target.closest('#fastChips .chip'); if (h) { S.settings.fastHours = +h.dataset.h; save(); renderFast(); return; }
+  if (e.target.closest('#fastStart')) { S.fast.start = Date.now(); save(); renderFast(); buzz(); toast(`Post počeo. Cilj: ${S.settings.fastHours} h`); return; }
+  if (e.target.closest('#fastStop')) { const hrs = (Date.now() - S.fast.start) / 36e5; S.fast.log = (S.fast.log || []).concat({ end: Date.now(), h: r1(hrs) }).slice(-60); S.fast.start = null; save(); renderFast(); toast(`Post završen: ${r1(hrs)} h ${hrs >= S.settings.fastHours ? '🎉' : ''}`); }
+};
+let sx = null;
+$('#v-today').addEventListener('touchstart', e => { sx = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+$('#v-today').addEventListener('touchend', e => {
+  if (!sx) return; const dx = e.changedTouches[0].clientX - sx[0], dy = e.changedTouches[0].clientY - sx[1]; sx = null;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) { cur = addDays(cur, dx < 0 ? 1 : -1); renderToday(); }
+});
+$('#v-progress').onclick = e => {
+  if (e.target.closest('#logWeight')) return openWeight();
+  if (e.target.closest('#coachBtn')) return runCoach();
+  if (e.target.closest('#applyAdaptive')) { const ad = adaptive(); if (ad.ready) { S.settings.goal = smartGoal(ad.tdee); save(); renderProgress(); toast(`Novi cilj: ${fmt(S.settings.goal)} kcal ✓`); } return; }
+  const r = e.target.closest('#dayList .item'); if (r) { cur = r.dataset.k; show('today'); }
+};
+$('#wPrev').onclick = () => { weekEnd = addDays(weekEnd, -7); renderWeek(); };
+$('#wNext').onclick = () => { if (weekEnd < today()) { weekEnd = addDays(weekEnd, 7); if (weekEnd > today()) weekEnd = today(); renderWeek(); } };
+
+['#pSex', '#pAge', '#pH', '#pW', '#pAct', '#pPace'].forEach(s => $(s).addEventListener('input', calcPreview));
+['#goal', '#pPct', '#cPct', '#fPct'].forEach(s => $(s).addEventListener('input', macroHint));
+$('#applyCalc').onclick = () => {
+  const p = readProfile(); if (!(p.age && p.h && p.w)) { toast('Popuni godine, visinu i težinu'); return; }
+  S.settings.profile = p; S.settings.goal = calcGoal(p); save(); renderProfile(); toast(`Dnevni cilj: ${fmt(S.settings.goal)} kcal ✓`);
+};
+$('#presetChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; const [p, c, f] = b.dataset.m.split(','); $('#pPct').value = p; $('#cPct').value = c; $('#fPct').value = f; macroHint(); };
+$('#saveGoals').onclick = () => {
+  const g = num($('#goal').value), p = num($('#pPct').value), c = num($('#cPct').value), f = num($('#fPct').value), wg = Math.round(num($('#waterGoal').value));
+  if (g < 800 || g > 8000) return toast('Cilj treba da bude između 800 i 8000 kcal');
+  if (p + c + f !== 100) return toast('Procenti moraju da daju 100%');
+  Object.assign(S.settings, { goal: g, pPct: p, cPct: c, fPct: f, waterGoal: Math.min(20, Math.max(1, wg || 8)), exAdds: $('#exToggle').value === '1' });
+  save(); toast('Sačuvano ✓');
+};
+$('#langChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; S.settings.lang = b.dataset.l; save(); renderProfile(); toast(b.dataset.l === 'en' ? 'Food names in English ✓' : 'Nazivi na srpskom ✓'); };
+$('#themeChips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; S.settings.theme = b.dataset.t; save(); applyTheme(); renderProfile(); };
+$('#saveKey').onclick = () => { S.settings.usdaKey = $('#usdaKey').value.trim(); save(); toast(S.settings.usdaKey ? 'USDA ključ sačuvan ✓' : 'USDA ključ uklonjen'); };
+$('#exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(Object.assign({}, S, { settings: Object.assign({}, S.settings, { usdaKey: '' }) }), null, 1)], { type: 'application/json' });
+  const filename = `bite-kopija-${today()}.json`;
+  if (saver) { saver.save({ filename, data: blob }).catch(e => { if (e && e.code !== 'declined') toast('Izvoz ovde nije dostupan'); }); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#importBtn').onclick = () => $('#importFile').click();
+$('#importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  e.target.value = '';
+  try {
+    const d = JSON.parse(await f.text()); if (!d || typeof d.days !== 'object') throw 0;
+    if (!(await askConfirm('Zameniti trenutne podatke uvezenim?', 'Uvezi'))) return;
+    const key = S.settings.usdaKey; S = normalize(d); if (!S.settings.usdaKey) S.settings.usdaKey = key; save();
+    applyTheme(); rerender(); toast('Podaci uvezeni ✓');
+  } catch (err) { toast('Fajl nije ispravna Bite kopija'); }
+};
+$('#resetBtn').onclick = async () => {
+  if (!(await askConfirm('Obrisati sve unose i podešavanja?', 'Obriši sve'))) return;
+  try { localStorage.removeItem(LS); localStorage.removeItem(OLD_LS); } catch (e) {}
+  if (cloud) Object.keys(synced).forEach(id => { delete synced[id]; chain = chain.then(() => cloud.doc(id).delete()).catch(() => {}); });
+  S = normalize(null); applyTheme(); rerender(); toast('Sve obrisano');
+};
+document.addEventListener('visibilitychange', () => { if (!document.hidden) rerender(); });
+
+if (IN_CLAUDE) { $('#themeCard').hidden = true; $('#usdaCard').hidden = true; }
+else {
+  const canScan = 'BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.isSecureContext;
+  const qp = $('#qaPhoto');
+  qp.classList.remove('ai');
+  qp.innerHTML = canScan ? '<span>▦</span>Barkod<small>skeniraj proizvod</small>' : '<span>⚡</span>Brzo<small>samo kalorije</small>';
+  qp.onclick = canScan ? () => { openAdd(); setTimeout(startScan, 350); } : () => { addTab = 'manual'; openAdd(); };
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  }
+}
+applyTheme();
+show('today');
+initClaude().then(() => setTimeout(maybeOnboard, 300));
+})();
+</script>
+</body>
+</html>
